@@ -1,40 +1,58 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
+import { ChangeDetectorRef } from '@angular/core';
 
-export interface WasteCollectionSchedule {
+export interface GarbageCollectionSchedule {
   id: number;
-  zone: string;
+  barangay: string;
   collectionDay: string;
   collectionTime: string;
-  wasteType: string;
-  status: 'Scheduled' | 'In Progress' | 'Completed';
+  truckNumber: string;
+  collectorName: string;
+  status: 'Scheduled' | 'Ongoing' | 'Completed' | 'Missed';
 }
 
 export interface MissedPickupReport {
   id: number;
   residentName: string;
+  contactNumber: string;
+  barangay: string;
   address: string;
-  zone: string;
-  missedDate: string;
-  issue: string;
+  missedDate: Date;
+  reason: string;
   status: 'Pending' | 'Investigating' | 'Resolved';
+  reportedAt: Date;
 }
 
 export interface WasteTruckRoute {
   id: number;
   truckNumber: string;
   driverName: string;
-  assignedZone: string;
-  currentStatus: 'Active' | 'Delayed' | 'Completed';
-  estimatedCompletion: string;
+  assignedArea: string;
+  routeStops: string[];
+  estimatedStartTime: string;
+  estimatedEndTime: string;
+  currentLocation: string;
+  status: 'Not Started' | 'In Progress' | 'Completed';
 }
 
-export interface RecyclingStatistic {
+export interface WasteBinStatus {
   id: number;
-  category: string;
-  amountCollected: number;
-  targetAmount: number;
+  location: string;
+  fillLevel: number;
+  wasteType: 'Biodegradable' | 'Non-Biodegradable' | 'Recyclable';
+  lastCollected: Date;
+  status: 'Normal' | 'Almost Full' | 'Full';
+}
+
+export interface WasteCollectionAnalytics {
+  totalPickupsToday: number;
+  missedPickupsToday: number;
+  activeTrucks: number;
+  completedRoutes: number;
+  totalWasteCollectedKg: number;
 }
 
 @Component({
@@ -42,94 +60,24 @@ export interface RecyclingStatistic {
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './waste-management.html',
-  styleUrl: './waste-management.css'
+  styleUrls: ['./waste-management.css']
 })
-export class WasteManagement {
-  schedules: WasteCollectionSchedule[] = [
-    {
-      id: 1,
-      zone: 'Zone A',
-      collectionDay: 'Monday',
-      collectionTime: '8:00 AM',
-      wasteType: 'Biodegradable',
-      status: 'Scheduled'
-    },
-    {
-      id: 2,
-      zone: 'Zone B',
-      collectionDay: 'Wednesday',
-      collectionTime: '10:00 AM',
-      wasteType: 'Recyclable',
-      status: 'In Progress'
-    }
-  ];
+export class WasteManagement implements OnInit {
+  private apiUrl = 'http://localhost:3000';
 
-  missedReports: MissedPickupReport[] = [
-    {
-      id: 1,
-      residentName: 'Juan Dela Cruz',
-      address: 'Block 12 Lot 4',
-      zone: 'Zone C',
-      missedDate: '2026-04-20',
-      issue: 'Truck did not arrive',
-      status: 'Pending'
-    },
-    {
-      id: 2,
-      residentName: 'Maria Santos',
-      address: 'Purok 5',
-      zone: 'Zone A',
-      missedDate: '2026-04-21',
-      issue: 'Garbage left behind',
-      status: 'Resolved'
-    }
-  ];
+  constructor(private http: HttpClient, private cdr: ChangeDetectorRef) {}
 
-  routes: WasteTruckRoute[] = [
-    {
-      id: 1,
-      truckNumber: 'WT-101',
-      driverName: 'Pedro Reyes',
-      assignedZone: 'Zone A',
-      currentStatus: 'Active',
-      estimatedCompletion: '2:00 PM'
-    },
-    {
-      id: 2,
-      truckNumber: 'WT-205',
-      driverName: 'Ana Cruz',
-      assignedZone: 'Zone B',
-      currentStatus: 'Delayed',
-      estimatedCompletion: '4:30 PM'
-    }
-  ];
+  schedules: GarbageCollectionSchedule[] = [];
+  missedReports: MissedPickupReport[] = [];
+  routes: WasteTruckRoute[] = [];
+  binStatuses: WasteBinStatus[] = [];
+  analytics!: WasteCollectionAnalytics;
 
-  recyclingStats: RecyclingStatistic[] = [
-    {
-      id: 1,
-      category: 'Plastic',
-      amountCollected: 120,
-      targetAmount: 150
-    },
-    {
-      id: 2,
-      category: 'Paper',
-      amountCollected: 90,
-      targetAmount: 100
-    },
-    {
-      id: 3,
-      category: 'Metal',
-      amountCollected: 60,
-      targetAmount: 80
-    }
-  ];
-
-  selectedSchedule: WasteCollectionSchedule | null = null;
+  selectedSchedule: GarbageCollectionSchedule | null = null;
   selectedReport: MissedPickupReport | null = null;
   selectedRoute: WasteTruckRoute | null = null;
 
-  editingSchedule: WasteCollectionSchedule | null = null;
+  editingSchedule: GarbageCollectionSchedule | null = null;
   editingReport: MissedPickupReport | null = null;
   editingRoute: WasteTruckRoute | null = null;
 
@@ -137,164 +85,238 @@ export class WasteManagement {
   showAddReportModal = false;
   showAddRouteModal = false;
 
-  newSchedule: WasteCollectionSchedule = {
+  newSchedule: GarbageCollectionSchedule = {
     id: 0,
-    zone: '',
+    barangay: '',
     collectionDay: '',
     collectionTime: '',
-    wasteType: '',
+    truckNumber: '',
+    collectorName: '',
     status: 'Scheduled'
   };
 
   newReport: MissedPickupReport = {
     id: 0,
     residentName: '',
+    contactNumber: '',
+    barangay: '',
     address: '',
-    zone: '',
-    missedDate: '',
-    issue: '',
-    status: 'Pending'
+    missedDate: new Date(),
+    reason: '',
+    status: 'Pending',
+    reportedAt: new Date()
   };
 
   newRoute: WasteTruckRoute = {
     id: 0,
     truckNumber: '',
     driverName: '',
-    assignedZone: '',
-    currentStatus: 'Active',
-    estimatedCompletion: ''
+    assignedArea: '',
+    routeStops: [],
+    estimatedStartTime: '',
+    estimatedEndTime: '',
+    currentLocation: '',
+    status: 'Not Started'
   };
 
-  showScheduleDetails(schedule: WasteCollectionSchedule) {
+  ngOnInit(): void {
+    this.loadSchedules();
+    this.loadReports();
+    this.loadRoutes();
+    this.loadBinStatuses();
+    this.loadAnalytics();
+  }
+
+  loadSchedules(): void {
+    this.http.get<GarbageCollectionSchedule[]>(`${this.apiUrl}/schedules`)
+      .subscribe(data => {
+        this.schedules = data;
+        this.cdr.detectChanges();
+      });
+  }
+
+  loadReports(): void {
+    this.http.get<MissedPickupReport[]>(`${this.apiUrl}/reports`)
+      .subscribe(data => {
+        this.missedReports = data;
+        this.cdr.detectChanges();
+      });
+  }
+
+  loadRoutes(): void {
+    this.http.get<WasteTruckRoute[]>(`${this.apiUrl}/routes`)
+      .subscribe(data => {
+        this.routes = data;
+        this.cdr.detectChanges();
+      });
+  }
+
+  loadBinStatuses(): void {
+    this.http.get<WasteBinStatus[]>(`${this.apiUrl}/bins`)
+      .subscribe(data => {
+        this.binStatuses = data;
+        this.cdr.detectChanges();
+      });
+  }
+
+  loadAnalytics(): void {
+    this.http.get<WasteCollectionAnalytics>(`${this.apiUrl}/analytics`)
+      .subscribe(data => {
+        this.analytics = data;
+        this.cdr.detectChanges();
+      });
+  }
+
+  showScheduleDetails(schedule: any) {
     this.selectedSchedule = schedule;
   }
 
-  showReportDetails(report: MissedPickupReport) {
+  showReportDetails(report: any) {
     this.selectedReport = report;
   }
 
-  showRouteDetails(route: WasteTruckRoute) {
+  showRouteDetails(route: any) {
     this.selectedRoute = route;
   }
 
-  markScheduleCompleted(schedule: WasteCollectionSchedule) {
-    schedule.status = 'Completed';
+  markScheduleCompleted(schedule: GarbageCollectionSchedule): void {
+    const updatedSchedule = {
+      ...schedule,
+      status: 'Completed' as const
+    };
+
+    this.http.put(`${this.apiUrl}/schedules/${schedule.id}`, updatedSchedule)
+      .subscribe(() => {
+        this.loadSchedules();
+      });
   }
 
-  resolveReport(report: MissedPickupReport) {
-    report.status = 'Resolved';
+  resolveReport(report: MissedPickupReport): void {
+    const updatedReport = {
+      ...report,
+      status: 'Resolved' as const
+    };
+
+    this.http.put(`${this.apiUrl}/reports/${report.id}`, updatedReport)
+      .subscribe(() => {
+        this.loadReports();
+      });
   }
 
-  markRouteCompleted(route: WasteTruckRoute) {
-    route.currentStatus = 'Completed';
+  markRouteCompleted(route: WasteTruckRoute): void {
+    const updatedRoute = {
+      ...route,
+      status: 'Completed' as const
+    };
+
+    this.http.put(`${this.apiUrl}/routes/${route.id}`, updatedRoute)
+      .subscribe(() => {
+        this.loadRoutes();
+      });
   }
 
-  editSchedule(schedule: WasteCollectionSchedule) {
+  editSchedule(schedule: GarbageCollectionSchedule): void {
     this.editingSchedule = { ...schedule };
   }
 
-  saveSchedule() {
-    if (this.editingSchedule) {
-      const index = this.schedules.findIndex(
-        s => s.id === this.editingSchedule!.id
-      );
+  saveSchedule(): void {
+    if (!this.editingSchedule) return;
 
-      if (index !== -1) {
-        this.schedules[index] = { ...this.editingSchedule };
-      }
-
+    this.http.put(
+      `${this.apiUrl}/schedules/${this.editingSchedule.id}`,
+      this.editingSchedule
+    ).subscribe(() => {
+      this.loadSchedules();
       this.editingSchedule = null;
-    }
+    });
   }
 
-  editReport(report: MissedPickupReport) {
+  editReport(report: MissedPickupReport): void {
     this.editingReport = { ...report };
   }
 
-  saveReport() {
-    if (this.editingReport) {
-      const index = this.missedReports.findIndex(
-        r => r.id === this.editingReport!.id
-      );
+  saveReport(): void {
+    if (!this.editingReport) return;
 
-      if (index !== -1) {
-        this.missedReports[index] = { ...this.editingReport };
-      }
-
+    this.http.put(
+      `${this.apiUrl}/reports/${this.editingReport.id}`,
+      this.editingReport
+    ).subscribe(() => {
+      this.loadReports();
       this.editingReport = null;
-    }
+    });
   }
 
-  editRoute(route: WasteTruckRoute) {
+  editRoute(route: WasteTruckRoute): void {
     this.editingRoute = { ...route };
   }
 
-  saveRoute() {
-    if (this.editingRoute) {
-      const index = this.routes.findIndex(
-        r => r.id === this.editingRoute!.id
-      );
+  saveRoute(): void {
+    if (!this.editingRoute) return;
 
-      if (index !== -1) {
-        this.routes[index] = { ...this.editingRoute };
-      }
-
+    this.http.put(
+      `${this.apiUrl}/routes/${this.editingRoute.id}`,
+      this.editingRoute
+    ).subscribe(() => {
+      this.loadRoutes();
       this.editingRoute = null;
-    }
+    });
   }
 
-  addSchedule() {
-    this.schedules.push({
-      ...this.newSchedule,
-      id: this.schedules.length + 1
+  addSchedule(): void {
+  this.http.post(`${this.apiUrl}/schedules`, this.newSchedule)
+    .subscribe(() => {
+      this.loadSchedules();
+      this.showAddScheduleModal = false;
+      this.cdr.detectChanges();
     });
+}
 
-    this.newSchedule = {
-      id: 0,
-      zone: '',
-      collectionDay: '',
-      collectionTime: '',
-      wasteType: '',
-      status: 'Scheduled'
-    };
+addReport(): void {
+  this.http.post(`${this.apiUrl}/reports`, this.newReport)
+    .subscribe(() => {
+      this.loadReports();
+      this.showAddReportModal = false;
+      this.cdr.detectChanges();
+    });
+}
 
+addRoute(): void {
+  this.http.post(`${this.apiUrl}/routes`, this.newRoute)
+    .subscribe(() => {
+      this.loadRoutes();
+      this.showAddRouteModal = false;
+      this.cdr.detectChanges();
+    });
+}
+
+  deleteSchedule(id: number): void {
+    this.schedules = this.schedules.filter(s => s.id !== id);
+    this.http.delete(`${this.apiUrl}/schedules/${id}`).subscribe();
+  }
+
+  deleteReport(id: number): void {
+    this.missedReports = this.missedReports.filter(r => r.id !== id);
+    this.http.delete(`${this.apiUrl}/reports/${id}`).subscribe();
+  }
+
+  deleteRoute(id: number): void {
+    this.routes = this.routes.filter(r => r.id !== id);
+    this.http.delete(`${this.apiUrl}/routes/${id}`).subscribe();
+  }
+
+  closeModals(): void {
+    this.selectedSchedule = null;
+    this.selectedReport = null;
+    this.selectedRoute = null;
+    this.editingSchedule = null;
+    this.editingReport = null;
+    this.editingRoute = null;
     this.showAddScheduleModal = false;
-  }
-
-  addReport() {
-    this.missedReports.push({
-      ...this.newReport,
-      id: this.missedReports.length + 1
-    });
-
-    this.newReport = {
-      id: 0,
-      residentName: '',
-      address: '',
-      zone: '',
-      missedDate: '',
-      issue: '',
-      status: 'Pending'
-    };
-
     this.showAddReportModal = false;
-  }
-
-  addRoute() {
-    this.routes.push({
-      ...this.newRoute,
-      id: this.routes.length + 1
-    });
-
-    this.newRoute = {
-      id: 0,
-      truckNumber: '',
-      driverName: '',
-      assignedZone: '',
-      currentStatus: 'Active',
-      estimatedCompletion: ''
-    };
-
     this.showAddRouteModal = false;
   }
+  trackById(index: number, item: any): number {
+    return item.id;
+  } 
 }

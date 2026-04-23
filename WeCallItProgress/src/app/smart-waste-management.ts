@@ -29,7 +29,6 @@ export interface WasteTruckRoute {
   estimatedStartTime: string;
   estimatedEndTime: string;
   currentLocation: string;
-  fuelLevel: number;
   status: 'Not Started' | 'In Progress' | 'Completed';
 }
 
