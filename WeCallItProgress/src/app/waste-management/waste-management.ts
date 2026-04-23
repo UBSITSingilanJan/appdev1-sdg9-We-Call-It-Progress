@@ -38,22 +38,6 @@ export interface WasteTruckRoute {
   status: 'Not Started' | 'In Progress' | 'Completed';
 }
 
-export interface WasteBinStatus {
-  id: number;
-  location: string;
-  fillLevel: number;
-  wasteType: 'Biodegradable' | 'Non-Biodegradable' | 'Recyclable';
-  lastCollected: Date;
-  status: 'Normal' | 'Almost Full' | 'Full';
-}
-
-export interface WasteCollectionAnalytics {
-  totalPickupsToday: number;
-  missedPickupsToday: number;
-  activeTrucks: number;
-  completedRoutes: number;
-  totalWasteCollectedKg: number;
-}
 
 @Component({
   selector: 'app-smart-waste-management',
@@ -70,8 +54,6 @@ export class WasteManagement implements OnInit {
   schedules: GarbageCollectionSchedule[] = [];
   missedReports: MissedPickupReport[] = [];
   routes: WasteTruckRoute[] = [];
-  binStatuses: WasteBinStatus[] = [];
-  analytics!: WasteCollectionAnalytics;
 
   selectedSchedule: GarbageCollectionSchedule | null = null;
   selectedReport: MissedPickupReport | null = null;
@@ -123,8 +105,6 @@ export class WasteManagement implements OnInit {
     this.loadSchedules();
     this.loadReports();
     this.loadRoutes();
-    this.loadBinStatuses();
-    this.loadAnalytics();
   }
 
   loadSchedules(): void {
@@ -147,22 +127,6 @@ export class WasteManagement implements OnInit {
     this.http.get<WasteTruckRoute[]>(`${this.apiUrl}/routes`)
       .subscribe(data => {
         this.routes = data;
-        this.cdr.detectChanges();
-      });
-  }
-
-  loadBinStatuses(): void {
-    this.http.get<WasteBinStatus[]>(`${this.apiUrl}/bins`)
-      .subscribe(data => {
-        this.binStatuses = data;
-        this.cdr.detectChanges();
-      });
-  }
-
-  loadAnalytics(): void {
-    this.http.get<WasteCollectionAnalytics>(`${this.apiUrl}/analytics`)
-      .subscribe(data => {
-        this.analytics = data;
         this.cdr.detectChanges();
       });
   }
