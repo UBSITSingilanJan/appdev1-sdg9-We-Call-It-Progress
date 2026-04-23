@@ -7,7 +7,7 @@
   </div>
 
   <div class="card-grid">
-    <div class="info-card" *ngFor="let schedule of schedules">
+    <div class="info-card" *ngFor="let schedule of schedules; trackBy: trackById">
       <h3>{{ schedule.barangay }}</h3>
       <p><strong>Collection Day:</strong> {{ schedule.collectionDay }}</p>
       <p><strong>Collection Time:</strong> {{ schedule.collectionTime }}</p>
@@ -28,6 +28,9 @@
         <button type="button" class="edit-btn" (click)="editSchedule(schedule)">
           Edit
         </button>
+        <button type="button" class="delete-btn" (click)="deleteSchedule(schedule.id)">
+          Delete
+        </button>
       </div>
     </div>
   </div>
@@ -42,7 +45,7 @@
   </div>
 
   <div class="card-grid">
-    <div class="info-card" *ngFor="let report of missedReports">
+    <div class="info-card" *ngFor="let report of missedReports; trackBy: trackById">
       <h3>{{ report.residentName }}</h3>
       <p><strong>Barangay:</strong> {{ report.barangay }}</p>
       <p><strong>Address:</strong> {{ report.address }}</p>
@@ -52,7 +55,6 @@
       <span class="badge">{{ report.status }}</span>
 
       <div class="button-group">
-        <div class="button-group">
           <button type="button" class="primary-btn" (click)="showReportDetails(report)">
             View Report
           </button>
@@ -64,7 +66,9 @@
           <button type="button" class="edit-btn" (click)="editReport(report)">
             Edit
           </button>
-        </div>
+          <button type="button" class="delete-btn" (click)="deleteReport(report.id)">
+            Delete
+          </button>
       </div>
     </div>
   </div>
@@ -79,12 +83,11 @@
   </div>
 
   <div class="card-grid">
-    <div class="info-card" *ngFor="let route of routes">
+    <div class="info-card" *ngFor="let route of routes; trackBy: trackById">
       <h3>{{ route.truckNumber }}</h3>
       <p><strong>Driver:</strong> {{ route.driverName }}</p>
       <p><strong>Assigned Area:</strong> {{ route.assignedArea }}</p>
       <p><strong>Current Location:</strong> {{ route.currentLocation }}</p>
-      <p><strong>Fuel Level:</strong> {{ route.fuelLevel }}%</p>
       <p><strong>Start Time:</strong> {{ route.estimatedStartTime }}</p>
       <p><strong>End Time:</strong> {{ route.estimatedEndTime }}</p>
 
@@ -101,6 +104,9 @@
 
           <button type="button" class="edit-btn" (click)="editRoute(route)">
           Edit
+        </button>
+        <button type="button" class="delete-btn" (click)="deleteRoute(route.id)">
+          Delete
         </button>
       </div>
     </div>
@@ -153,11 +159,11 @@
   </div>
 </section>
 
-<div *ngIf="selectedSchedule" class="modal-overlay">
+<div *ngIf="selectedSchedule as s" class="modal-overlay">
   <div class="modal-card">
     <button class="close-btn" (click)="selectedSchedule = null">×</button>
 
-    <h2>{{ selectedSchedule.barangay }}</h2>
+    <h2>{{ s.barangay }}</h2>
     <p><strong>Collection Day:</strong> {{ selectedSchedule.collectionDay }}</p>
     <p><strong>Collection Time:</strong> {{ selectedSchedule.collectionTime }}</p>
     <p><strong>Truck Number:</strong> {{ selectedSchedule.truckNumber }}</p>
@@ -166,11 +172,11 @@
   </div>
 </div>
 
-<div *ngIf="selectedReport" class="modal-overlay">
+<div *ngIf="selectedReport as s" class="modal-overlay">
   <div class="modal-card">
     <button class="close-btn" (click)="selectedReport = null">×</button>
 
-    <h2>{{ selectedReport.residentName }}</h2>
+    <h2>{{ s.residentName }}</h2>
     <p><strong>Contact Number:</strong> {{ selectedReport.contactNumber }}</p>
     <p><strong>Barangay:</strong> {{ selectedReport.barangay }}</p>
     <p><strong>Address:</strong> {{ selectedReport.address }}</p>
@@ -180,15 +186,14 @@
   </div>
 </div>
 
-<div *ngIf="selectedRoute" class="modal-overlay">
+<div *ngIf="selectedRoute as s" class="modal-overlay">
   <div class="modal-card">
     <button class="close-btn" (click)="selectedRoute = null">×</button>
 
-    <h2>{{ selectedRoute.truckNumber }}</h2>
+    <h2>{{ s.truckNumber }}</h2>
     <p><strong>Driver:</strong> {{ selectedRoute.driverName }}</p>
     <p><strong>Assigned Area:</strong> {{ selectedRoute.assignedArea }}</p>
     <p><strong>Current Location:</strong> {{ selectedRoute.currentLocation }}</p>
-    <p><strong>Fuel Level:</strong> {{ selectedRoute.fuelLevel }}%</p>
     <p><strong>Estimated Start Time:</strong> {{ selectedRoute.estimatedStartTime }}</p>
     <p><strong>Estimated End Time:</strong> {{ selectedRoute.estimatedEndTime }}</p>
     <p><strong>Status:</strong> {{ selectedRoute.status }}</p>
@@ -243,7 +248,6 @@
     <input [(ngModel)]="editingRoute.currentLocation" class="modal-input" placeholder="Current Location">
     <input [(ngModel)]="editingRoute.estimatedStartTime" class="modal-input" placeholder="Start Time">
     <input [(ngModel)]="editingRoute.estimatedEndTime" class="modal-input" placeholder="End Time">
-    <input [(ngModel)]="editingRoute.fuelLevel" type="number" class="modal-input" placeholder="Fuel Level">
 
     <button type="button" class="save-btn" (click)="saveRoute()">
       Save Route
@@ -257,15 +261,17 @@
 
     <h2>Add Schedule</h2>
 
-    <input [(ngModel)]="newSchedule.barangay" class="modal-input" placeholder="Barangay">
-    <input [(ngModel)]="newSchedule.collectionDay" class="modal-input" placeholder="Collection Day">
-    <input [(ngModel)]="newSchedule.collectionTime" class="modal-input" placeholder="Collection Time">
-    <input [(ngModel)]="newSchedule.truckNumber" class="modal-input" placeholder="Truck Number">
-    <input [(ngModel)]="newSchedule.collectorName" class="modal-input" placeholder="Collector Name">
+    <form (ngSubmit)="addSchedule()">
+      <input [(ngModel)]="newSchedule.barangay" name="barangay" class="modal-input" placeholder="Barangay">
+      <input [(ngModel)]="newSchedule.collectionDay" name="collectionDay" class="modal-input" placeholder="Collection Day">
+      <input [(ngModel)]="newSchedule.collectionTime" name="collectionTime" class="modal-input" placeholder="Collection Time">
+      <input [(ngModel)]="newSchedule.truckNumber" name="truckNumber" class="modal-input" placeholder="Truck Number">
+      <input [(ngModel)]="newSchedule.collectorName" name="collectorName" class="modal-input" placeholder="Collector Name">
 
-    <button type="button" class="save-btn" (click)="addSchedule()">
-      Add Schedule
-    </button>
+      <button type="button" class="save-btn" (click)="addSchedule(); $event.stopPropagation()">
+        Add Schedule
+      </button>
+    </form>
   </div>
 </div>
 
@@ -275,15 +281,17 @@
 
     <h2>Add Report</h2>
 
-    <input [(ngModel)]="newReport.residentName" class="modal-input" placeholder="Resident Name">
-    <input [(ngModel)]="newReport.contactNumber" class="modal-input" placeholder="Contact Number">
-    <input [(ngModel)]="newReport.barangay" class="modal-input" placeholder="Barangay">
-    <input [(ngModel)]="newReport.address" class="modal-input" placeholder="Address">
-    <input [(ngModel)]="newReport.reason" class="modal-input" placeholder="Reason">
+    <form (ngSubmit)="addReport()">
+      <input [(ngModel)]="newReport.residentName" name="residentName" class="modal-input" placeholder="Resident Name">
+      <input [(ngModel)]="newReport.contactNumber" name="contactNumber" class="modal-input" placeholder="Contact Number">
+      <input [(ngModel)]="newReport.barangay" name="barangay" class="modal-input" placeholder="Barangay">
+      <input [(ngModel)]="newReport.address" name="address" class="modal-input" placeholder="Address">
+      <input [(ngModel)]="newReport.reason" name="reason" class="modal-input" placeholder="Reason">
 
-    <button type="button" class="save-btn" (click)="addReport()">
-      Add Report
-    </button>
+      <button type="button" class="save-btn" (click)="addReport(); $event.stopPropagation()">
+        Add Report
+      </button>
+    </form>
   </div>
 </div>
 
@@ -293,16 +301,17 @@
 
     <h2>Add Route</h2>
 
-    <input [(ngModel)]="newRoute.truckNumber" class="modal-input" placeholder="Truck Number">
-    <input [(ngModel)]="newRoute.driverName" class="modal-input" placeholder="Driver Name">
-    <input [(ngModel)]="newRoute.assignedArea" class="modal-input" placeholder="Assigned Area">
-    <input [(ngModel)]="newRoute.currentLocation" class="modal-input" placeholder="Current Location">
-    <input [(ngModel)]="newRoute.estimatedStartTime" class="modal-input" placeholder="Start Time">
-    <input [(ngModel)]="newRoute.estimatedEndTime" class="modal-input" placeholder="End Time">
-    <input [(ngModel)]="newRoute.fuelLevel" type="number" class="modal-input" placeholder="Fuel Level">
+    <form (ngSubmit)="addRoute()">
+      <input [(ngModel)]="newRoute.truckNumber" name="truckNumber" class="modal-input" placeholder="Truck Number">
+      <input [(ngModel)]="newRoute.driverName" name="driverName" class="modal-input" placeholder="Driver Name">
+      <input [(ngModel)]="newRoute.assignedArea" name="assignedArea" class="modal-input" placeholder="Assigned Area">
+      <input [(ngModel)]="newRoute.currentLocation" name="currentLocation" class="modal-input" placeholder="Current Location">
+      <input [(ngModel)]="newRoute.estimatedStartTime" name="estimatedStartTime" class="modal-input" placeholder="Start Time">
+      <input [(ngModel)]="newRoute.estimatedEndTime" name="estimatedEndTime" class="modal-input" placeholder="End Time">
 
-    <button type="button" class="save-btn" (click)="addRoute()">
-      Add Route
-    </button>
+      <button type="button" class="save-btn" (click)="addRoute(); $event.stopPropagation()">
+        Add Route
+      </button>
+    </form>
   </div>
 </div>

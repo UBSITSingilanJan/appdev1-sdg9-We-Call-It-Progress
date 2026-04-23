@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { ChangeDetectorRef } from '@angular/core';
 
 export interface GarbageCollectionSchedule {
   id: number;
@@ -34,7 +35,6 @@ export interface WasteTruckRoute {
   estimatedStartTime: string;
   estimatedEndTime: string;
   currentLocation: string;
-  fuelLevel: number;
   status: 'Not Started' | 'In Progress' | 'Completed';
 }
 
@@ -60,18 +60,18 @@ export interface WasteCollectionAnalytics {
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './waste-management.html',
-  styleUrl: './waste-management.css'
+  styleUrls: ['./waste-management.css']
 })
 export class WasteManagement implements OnInit {
   private apiUrl = 'http://localhost:3000';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private cdr: ChangeDetectorRef) {}
 
   schedules: GarbageCollectionSchedule[] = [];
   missedReports: MissedPickupReport[] = [];
   routes: WasteTruckRoute[] = [];
   binStatuses: WasteBinStatus[] = [];
-  analytics: WasteCollectionAnalytics | null = null;
+  analytics!: WasteCollectionAnalytics;
 
   selectedSchedule: GarbageCollectionSchedule | null = null;
   selectedReport: MissedPickupReport | null = null;
@@ -116,7 +116,6 @@ export class WasteManagement implements OnInit {
     estimatedStartTime: '',
     estimatedEndTime: '',
     currentLocation: '',
-    fuelLevel: 100,
     status: 'Not Started'
   };
 
@@ -132,6 +131,7 @@ export class WasteManagement implements OnInit {
     this.http.get<GarbageCollectionSchedule[]>(`${this.apiUrl}/schedules`)
       .subscribe(data => {
         this.schedules = data;
+        this.cdr.detectChanges();
       });
   }
 
@@ -139,6 +139,7 @@ export class WasteManagement implements OnInit {
     this.http.get<MissedPickupReport[]>(`${this.apiUrl}/reports`)
       .subscribe(data => {
         this.missedReports = data;
+        this.cdr.detectChanges();
       });
   }
 
@@ -146,6 +147,7 @@ export class WasteManagement implements OnInit {
     this.http.get<WasteTruckRoute[]>(`${this.apiUrl}/routes`)
       .subscribe(data => {
         this.routes = data;
+        this.cdr.detectChanges();
       });
   }
 
@@ -153,6 +155,7 @@ export class WasteManagement implements OnInit {
     this.http.get<WasteBinStatus[]>(`${this.apiUrl}/bins`)
       .subscribe(data => {
         this.binStatuses = data;
+        this.cdr.detectChanges();
       });
   }
 
@@ -160,19 +163,20 @@ export class WasteManagement implements OnInit {
     this.http.get<WasteCollectionAnalytics>(`${this.apiUrl}/analytics`)
       .subscribe(data => {
         this.analytics = data;
+        this.cdr.detectChanges();
       });
   }
 
-  showScheduleDetails(schedule: GarbageCollectionSchedule): void {
-    this.selectedSchedule = { ...schedule };
+  showScheduleDetails(schedule: any) {
+    this.selectedSchedule = schedule;
   }
 
-  showReportDetails(report: MissedPickupReport): void {
-    this.selectedReport = { ...report };
+  showReportDetails(report: any) {
+    this.selectedReport = report;
   }
 
-  showRouteDetails(route: WasteTruckRoute): void {
-    this.selectedRoute = { ...route };
+  showRouteDetails(route: any) {
+    this.selectedRoute = route;
   }
 
   markScheduleCompleted(schedule: GarbageCollectionSchedule): void {
@@ -260,86 +264,45 @@ export class WasteManagement implements OnInit {
   }
 
   addSchedule(): void {
-    this.http.post(`${this.apiUrl}/schedules`, this.newSchedule)
-      .subscribe(() => {
-        this.loadSchedules();
+  this.http.post(`${this.apiUrl}/schedules`, this.newSchedule)
+    .subscribe(() => {
+      this.loadSchedules();
+      this.showAddScheduleModal = false;
+      this.cdr.detectChanges();
+    });
+}
 
-        this.newSchedule = {
-          id: 0,
-          barangay: '',
-          collectionDay: '',
-          collectionTime: '',
-          truckNumber: '',
-          collectorName: '',
-          status: 'Scheduled'
-        };
+addReport(): void {
+  this.http.post(`${this.apiUrl}/reports`, this.newReport)
+    .subscribe(() => {
+      this.loadReports();
+      this.showAddReportModal = false;
+      this.cdr.detectChanges();
+    });
+}
 
-        this.showAddScheduleModal = false;
-      });
-  }
-
-  addReport(): void {
-    this.http.post(`${this.apiUrl}/reports`, this.newReport)
-      .subscribe(() => {
-        this.loadReports();
-
-        this.newReport = {
-          id: 0,
-          residentName: '',
-          contactNumber: '',
-          barangay: '',
-          address: '',
-          missedDate: new Date(),
-          reason: '',
-          status: 'Pending',
-          reportedAt: new Date()
-        };
-
-        this.showAddReportModal = false;
-      });
-  }
-
-  addRoute(): void {
-    this.http.post(`${this.apiUrl}/routes`, this.newRoute)
-      .subscribe(() => {
-        this.loadRoutes();
-
-        this.newRoute = {
-          id: 0,
-          truckNumber: '',
-          driverName: '',
-          assignedArea: '',
-          routeStops: [],
-          estimatedStartTime: '',
-          estimatedEndTime: '',
-          currentLocation: '',
-          fuelLevel: 100,
-          status: 'Not Started'
-        };
-
-        this.showAddRouteModal = false;
-      });
-  }
+addRoute(): void {
+  this.http.post(`${this.apiUrl}/routes`, this.newRoute)
+    .subscribe(() => {
+      this.loadRoutes();
+      this.showAddRouteModal = false;
+      this.cdr.detectChanges();
+    });
+}
 
   deleteSchedule(id: number): void {
-    this.http.delete(`${this.apiUrl}/schedules/${id}`)
-      .subscribe(() => {
-        this.loadSchedules();
-      });
+    this.schedules = this.schedules.filter(s => s.id !== id);
+    this.http.delete(`${this.apiUrl}/schedules/${id}`).subscribe();
   }
 
   deleteReport(id: number): void {
-    this.http.delete(`${this.apiUrl}/reports/${id}`)
-      .subscribe(() => {
-        this.loadReports();
-      });
+    this.missedReports = this.missedReports.filter(r => r.id !== id);
+    this.http.delete(`${this.apiUrl}/reports/${id}`).subscribe();
   }
 
   deleteRoute(id: number): void {
-    this.http.delete(`${this.apiUrl}/routes/${id}`)
-      .subscribe(() => {
-        this.loadRoutes();
-      });
+    this.routes = this.routes.filter(r => r.id !== id);
+    this.http.delete(`${this.apiUrl}/routes/${id}`).subscribe();
   }
 
   closeModals(): void {
@@ -353,4 +316,7 @@ export class WasteManagement implements OnInit {
     this.showAddReportModal = false;
     this.showAddRouteModal = false;
   }
+  trackById(index: number, item: any): number {
+    return item.id;
+  } 
 }
