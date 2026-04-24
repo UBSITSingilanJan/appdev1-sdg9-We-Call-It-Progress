@@ -8,107 +8,12 @@ const PORT = 3000;
 app.use(cors());
 app.use(bodyParser.json());
 
-let schedules = [
-  {
-    id: 1,
-    barangay: 'Barangay Sto. Cristo',
-    collectionDay: 'Monday',
-    collectionTime: '8:00 AM',
-    truckNumber: 'TRK-101',
-    collectorName: 'Juan Dela Cruz',
-    status: 'Scheduled'
-  },
-  {
-    id: 2,
-    barangay: 'Barangay Muzon',
-    collectionDay: 'Wednesday',
-    collectionTime: '10:00 AM',
-    truckNumber: 'TRK-205',
-    collectorName: 'Pedro Santos',
-    status: 'Ongoing'
-  }
-];
+let schedules = [];
 
-let reports = [
-  {
-    id: 1,
-    residentName: 'Maria Reyes',
-    contactNumber: '09171234567',
-    barangay: 'Barangay Sto. Cristo',
-    address: 'Block 5 Lot 10',
-    missedDate: '2026-04-20',
-    reason: 'Truck did not arrive',
-    status: 'Pending',
-    reportedAt: '2026-04-21'
-  },
-  {
-    id: 2,
-    residentName: 'Jose Cruz',
-    contactNumber: '09987654321',
-    barangay: 'Barangay Muzon',
-    address: 'Purok 3',
-    missedDate: '2026-04-19',
-    reason: 'Garbage was left behind',
-    status: 'Investigating',
-    reportedAt: '2026-04-20'
-  }
-];
+let reports = [];
 
-let routes = [
-  {
-    id: 1,
-    truckNumber: 'TRK-101',
-    driverName: 'Carlos Mendoza',
-    assignedArea: 'Barangay Sto. Cristo',
-    routeStops: ['Street 1', 'Street 2', 'Street 3'],
-    estimatedStartTime: '7:00 AM',
-    estimatedEndTime: '1:00 PM',
-    currentLocation: 'Street 2',
-    fuelLevel: 80,
-    status: 'In Progress'
-  },
-  {
-    id: 2,
-    truckNumber: 'TRK-205',
-    driverName: 'Ana Santos',
-    assignedArea: 'Barangay Muzon',
-    routeStops: ['Area A', 'Area B', 'Area C'],
-    estimatedStartTime: '8:00 AM',
-    estimatedEndTime: '2:00 PM',
-    currentLocation: 'Area A',
-    fuelLevel: 65,
-    status: 'Not Started'
-  }
-];
+let routes = [];
 
-let bins = [
-  {
-    id: 1,
-    location: 'Barangay Sto. Cristo Plaza',
-    fillLevel: 85,
-    wasteType: 'Biodegradable',
-    lastCollected: '2026-04-21',
-    status: 'Almost Full'
-  },
-  {
-    id: 2,
-    location: 'Barangay Muzon Market',
-    fillLevel: 95,
-    wasteType: 'Recyclable',
-    lastCollected: '2026-04-20',
-    status: 'Full'
-  }
-];
-
-let analytics = {
-  totalPickupsToday: 45,
-  missedPickupsToday: 3,
-  activeTrucks: 6,
-  completedRoutes: 4,
-  totalWasteCollectedKg: 1250
-};
-
-// SCHEDULES
 app.get('/schedules', (req, res) => {
   res.json(schedules);
 });
@@ -148,7 +53,6 @@ app.delete('/schedules/:id', (req, res) => {
   res.json({ message: 'Schedule deleted successfully' });
 });
 
-// REPORTS
 app.get('/reports', (req, res) => {
   res.json(reports);
 });
@@ -188,7 +92,6 @@ app.delete('/reports/:id', (req, res) => {
   res.json({ message: 'Report deleted successfully' });
 });
 
-// ROUTES
 app.get('/routes', (req, res) => {
   res.json(routes);
 });
@@ -226,51 +129,6 @@ app.delete('/routes/:id', (req, res) => {
   routes = routes.filter(route => route.id !== id);
 
   res.json({ message: 'Route deleted successfully' });
-});
-
-// BINS
-app.get('/bins', (req, res) => {
-  res.json(bins);
-});
-
-app.post('/bins', (req, res) => {
-  const newBin = {
-    id: bins.length + 1,
-    ...req.body
-  };
-
-  bins.push(newBin);
-  res.status(201).json(newBin);
-});
-
-app.put('/bins/:id', (req, res) => {
-  const id = parseInt(req.params.id);
-
-  const index = bins.findIndex(bin => bin.id === id);
-
-  if (index !== -1) {
-    bins[index] = {
-      ...bins[index],
-      ...req.body
-    };
-
-    res.json(bins[index]);
-  } else {
-    res.status(404).json({ message: 'Bin not found' });
-  }
-});
-
-app.delete('/bins/:id', (req, res) => {
-  const id = parseInt(req.params.id);
-
-  bins = bins.filter(bin => bin.id !== id);
-
-  res.json({ message: 'Bin deleted successfully' });
-});
-
-// ANALYTICS
-app.get('/analytics', (req, res) => {
-  res.json(analytics);
 });
 
 app.listen(PORT, () => {

@@ -113,52 +113,6 @@
   </div>
 </section>
 
-<section class="card-section">
-  <h2>Waste Bin Status</h2>
-
-  <div class="card-grid">
-    <div class="info-card" *ngFor="let bin of binStatuses">
-      <h3>{{ bin.location }}</h3>
-      <p><strong>Waste Type:</strong> {{ bin.wasteType }}</p>
-      <p><strong>Fill Level:</strong> {{ bin.fillLevel }}%</p>
-      <p><strong>Last Collected:</strong> {{ bin.lastCollected }}</p>
-
-      <span class="badge">{{ bin.status }}</span>
-    </div>
-  </div>
-</section>
-
-<section class="card-section" *ngIf="analytics">
-  <h2>Waste Collection Analytics</h2>
-
-  <div class="card-grid">
-    <div class="info-card">
-      <h3>Total Pickups Today</h3>
-      <p>{{ analytics.totalPickupsToday }}</p>
-    </div>
-
-    <div class="info-card">
-      <h3>Missed Pickups Today</h3>
-      <p>{{ analytics.missedPickupsToday }}</p>
-    </div>
-
-    <div class="info-card">
-      <h3>Active Trucks</h3>
-      <p>{{ analytics.activeTrucks }}</p>
-    </div>
-
-    <div class="info-card">
-      <h3>Completed Routes</h3>
-      <p>{{ analytics.completedRoutes }}</p>
-    </div>
-
-    <div class="info-card">
-      <h3>Total Waste Collected</h3>
-      <p>{{ analytics.totalWasteCollectedKg }} kg</p>
-    </div>
-  </div>
-</section>
-
 <div *ngIf="selectedSchedule as s" class="modal-overlay">
   <div class="modal-card">
     <button class="close-btn" (click)="selectedSchedule = null">×</button>

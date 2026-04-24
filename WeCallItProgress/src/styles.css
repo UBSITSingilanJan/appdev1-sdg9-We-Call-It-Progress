@@ -1,3 +1,21 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+html, body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+app-root {
+  height: 100%;
+  display: block;
+  overflow: hidden;
+}
+
+router-outlet + * {
+  height: 100%;
+  display: block;
+  overflow: hidden;
+}

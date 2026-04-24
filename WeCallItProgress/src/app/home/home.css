@@ -1,0 +1,54 @@
+html, body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+.intro-container {
+  height: 100%;
+  width: 100%;
+  background: #0f172a;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+.intro-card {
+  background: #1e293b;
+  padding: 40px;
+  border-radius: 16px;
+  max-width: 700px;
+  width: 100%;
+  text-align: center;
+  color: white;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+}
+
+.intro-card h1 {
+  margin-bottom: 20px;
+  font-size: 32px;
+}
+
+.intro-card p {
+  margin-bottom: 15px;
+  opacity: 0.8;
+  line-height: 1.5;
+}
+
+.intro-card button {
+  margin-top: 20px;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  background: #f97316;
+  color: white;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.2s ease;
+}
+
+.intro-card button:hover {
+  opacity: 0.9;
+  transform: scale(1.03);
+}

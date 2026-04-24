@@ -1,0 +1,73 @@
+html, body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+.home-container {
+  height: 100%;
+  width: 100%;
+  background: #0f172a;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  padding: 40px 60px;
+  box-sizing: border-box;
+}
+
+.hero {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.hero h1 {
+  font-size: 32px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.hero p {
+  margin-top: 8px;
+  color: rgba(255,255,255,0.7);
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 20px;
+
+  max-width: 1200px;
+  margin: 0 auto;
+
+  align-items: start;
+}
+
+.home-card {
+  background: linear-gradient(135deg, #1e293b, #1a2438);
+  border-radius: 16px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  border: 1px solid rgba(255,255,255,0.05);
+  min-width: 0;
+  min-height: 140px;
+  color: #e2e8f0;
+}
+
+.home-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(249, 115, 22, 0.25);
+}
+
+.home-card h2 {
+  margin-bottom: 10px;
+  font-size: 18px;
+  color: #ffffff;
+}
+
+.home-card p {
+  opacity: 0.75;
+  font-size: 13px;
+  line-height: 1.4;
+}
