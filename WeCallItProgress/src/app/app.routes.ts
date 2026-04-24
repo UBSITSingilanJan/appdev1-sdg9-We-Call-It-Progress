@@ -1,6 +1,5 @@
 import { Routes } from '@angular/router';
 import { Home } from './home/home';
-import { Dashboard } from './dashboard/dashboard';
 import { AdminPanel} from './admin-panel/admin-panel';
 import { EnergyMonitoring } from './energy-monitoring/energy-monitoring';
 import { InfrastructureReporting } from './infrastructure-reporting/infrastructure-reporting';
@@ -18,10 +17,6 @@ pathMatch: 'full',
 {
 path: 'home',
 component: Home,
-},
-{
-path: 'dashboard',
-component: Dashboard,
 },
 {
 path: 'admin-panel',

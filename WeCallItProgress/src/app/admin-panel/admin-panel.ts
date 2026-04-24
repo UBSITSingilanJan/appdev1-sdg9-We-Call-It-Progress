@@ -1,9 +1,16 @@
 import { Component } from '@angular/core';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-admin-panel',
-  imports: [],
+  standalone: true,
   templateUrl: './admin-panel.html',
-  styleUrl: './admin-panel.css',
+  styleUrls: ['./admin-panel.css']
 })
-export class AdminPanel {}
+export class AdminPanel {
+  constructor(private router: Router) {}
+
+  go(route: string) {
+    this.router.navigate([`/${route}`]);
+  }
+}
