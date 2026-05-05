@@ -1,1 +1,59 @@
-<p>smart-traffic-management works!</p>
+<div class="traffic-page">
+
+  <!-- TITLE -->
+  <div class="page-header">
+    <h2>Smart Traffic Management</h2>
+    <p>Live monitoring of road congestion using OpenStreetMap</p>
+  </div>
+
+  <!-- MAIN GRID -->
+  <div class="grid">
+
+    <!-- MAP CARD -->
+    <div class="card map-card">
+      <div id="map"></div>
+    </div>
+
+    <!-- CONTROL CARD -->
+    <div class="card form-card">
+
+      <h3>Add Route</h3>
+
+      <input type="text" placeholder="Route Name"
+        [(ngModel)]="newRoute.name">
+
+      <select [(ngModel)]="newRoute.status">
+        <option value="normal">Normal</option>
+        <option value="heavy">Heavy</option>
+        <option value="blocked">Blocked</option>
+      </select>
+
+      <button (click)="addRoute()">Add Route</button>
+
+      <hr>
+
+      <h3>Routes</h3>
+
+      <div class="route-list">
+
+        <div class="route-item" *ngFor="let r of routes">
+
+          <div class="top">
+            <strong>{{ r.name }}</strong>
+          </div>
+
+          <div class="status">{{ r.status }}</div>
+
+          <button class="delete" (click)="deleteRoute(r.id)">
+            Delete
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>

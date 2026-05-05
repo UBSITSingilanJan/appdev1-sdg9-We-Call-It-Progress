@@ -1,0 +1,118 @@
+
+/* PAGE */
+.traffic-page {
+  padding: 20px;
+  background: #0f172a;
+  min-height: 100vh;
+  color: white;
+  font-family: Arial, sans-serif;
+}
+
+/* HEADER */
+.page-header {
+  margin-bottom: 15px;
+}
+
+.page-header h2 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.page-header p {
+  opacity: 0.7;
+  margin-top: 5px;
+}
+
+/* GRID LAYOUT */
+.grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 15px;
+  height: calc(100vh - 120px);
+}
+
+/* CARD BASE */
+.card {
+  background: #1e293b;
+  border-radius: 16px;
+  padding: 15px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+  overflow: hidden;
+}
+
+/* MAP */
+.map-card {
+  padding: 0;
+}
+
+#map {
+  width: 100%;
+  height: 500px;
+  border-radius: 12px;
+}
+
+/* FORM */
+.form-card h3 {
+  margin-top: 0;
+}
+
+input, select {
+  width: 100%;
+  padding: 10px;
+  margin: 6px 0;
+  border-radius: 8px;
+  border: none;
+  background: #0f172a;
+  color: white;
+}
+
+/* BUTTON */
+button {
+  width: 100%;
+  padding: 12px;
+  margin-top: 8px;
+  border: none;
+  border-radius: 8px;
+  background: #f97316;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button:hover {
+  opacity: 0.9;
+}
+
+/* ROUTE LIST */
+.route-list {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.route-item {
+  background: #0f172a;
+  padding: 10px;
+  border-radius: 10px;
+}
+
+.top {
+  display: flex;
+  justify-content: space-between;
+}
+
+.status {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+/* DELETE */
+.delete {
+  background: #ef4444;
+  margin-top: 8px;
+}
+
+.delete:hover {
+  background: #dc2626;
+}

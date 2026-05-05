@@ -1,1 +1,38 @@
-<p>energy-monitoring works!</p>
+<section class="energy-container">
+
+  <!-- HEADER -->
+  <div class="header">
+    <h1>Energy Monitoring</h1>
+
+    <div class="header-actions">
+      <button class="add-btn" (click)="toggleAdd()">Add</button>
+      <button class="refresh-btn" (click)="loadEnergy()">Refresh</button>
+    </div>
+  </div>
+
+  <!-- ADD FORM -->
+  <div *ngIf="showAdd" class="add-form">
+    <input [(ngModel)]="newEnergy.location" placeholder="Location">
+    <input [(ngModel)]="newEnergy.consumption" type="number" placeholder="Consumption (kWh)">
+
+    <button class="save-btn" (click)="addEnergy()">Save</button>
+    <button class="cancel-btn" (click)="cancelAdd()">Cancel</button>
+  </div>
+
+  <!-- CHART -->
+  <div class="chart-container">
+    <canvas id="energyChart"></canvas>
+  </div>
+
+  <!-- CARDS -->
+  <div class="energy-grid">
+    <div class="energy-card" *ngFor="let item of energyData; trackBy: trackById">
+      <h2>{{ item.location }}</h2>
+      <p class="consumption">{{ item.consumption }} kWh</p>
+      <p class="timestamp">{{ item.timestamp | date:'short' }}</p>
+
+      <button class="delete-btn" (click)="deleteEnergy(item.id)">Delete</button>
+    </div>
+  </div>
+
+</section>
