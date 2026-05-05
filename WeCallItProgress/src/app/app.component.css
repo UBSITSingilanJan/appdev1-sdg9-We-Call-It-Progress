@@ -1,0 +1,22 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+}
+
+app-nav-bar {
+  flex-shrink: 0;
+}
+
+router-outlet {
+  display: none;
+}
+
+:host ::ng-deep router-outlet + * {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: auto;
+}

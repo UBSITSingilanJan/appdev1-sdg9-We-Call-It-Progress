@@ -1,59 +1,81 @@
 <div class="traffic-page">
-
-  <!-- TITLE -->
-  <div class="page-header">
-    <h2>Smart Traffic Management</h2>
-    <p>Live monitoring of road congestion using OpenStreetMap</p>
+  <div class="header">
+    <h2>🚦 Smart Traffic Management</h2>
+    <p>SDG 9: Industry, Innovation & Infrastructure | Live API Integration</p>
   </div>
 
-  <!-- MAIN GRID -->
-  <div class="grid">
-
-    <!-- MAP CARD -->
-    <div class="card map-card">
-      <div id="map"></div>
+  <div class="container">
+    <!-- Map Section -->
+    <div class="map-section">
+      <div #mapContainer class="map-container"></div>
     </div>
 
-    <!-- CONTROL CARD -->
-    <div class="card form-card">
-
-      <h3>Add Route</h3>
-
-      <input type="text" placeholder="Route Name"
-        [(ngModel)]="newRoute.name">
-
-      <select [(ngModel)]="newRoute.status">
-        <option value="normal">Normal</option>
-        <option value="heavy">Heavy</option>
-        <option value="blocked">Blocked</option>
-      </select>
-
-      <button (click)="addRoute()">Add Route</button>
-
-      <hr>
-
-      <h3>Routes</h3>
-
-      <div class="route-list">
-
-        <div class="route-item" *ngFor="let r of routes">
-
-          <div class="top">
-            <strong>{{ r.name }}</strong>
-          </div>
-
-          <div class="status">{{ r.status }}</div>
-
-          <button class="delete" (click)="deleteRoute(r.id)">
-            Delete
-          </button>
-
+    <!-- Controls Section -->
+    <div class="controls-section">
+      <div class="card">
+        <h3>➕ Add Route</h3>
+        
+        <div *ngIf="errorMessage" class="error-message">
+          ⚠️ {{ errorMessage }}
         </div>
+        
+        <input 
+          type="text" 
+          placeholder="Route name (e.g., EDSA, C5, Commonwealth)" 
+          [(ngModel)]="newRoute.name"
+        >
 
+        <select [(ngModel)]="newRoute.status">
+          <option value="normal">🟢 Normal</option>
+          <option value="heavy">🟠 Heavy</option>
+          <option value="blocked">🔴 Blocked</option>
+        </select>
+
+        <select [(ngModel)]="newRoute.congestionLevel">
+          <option value="20">🟢 20% - Light traffic</option>
+          <option value="50">🟠 50% - Moderate</option>
+          <option value="80">🔴 80% - Heavy</option>
+          <option value="95">🔴 95% - Gridlock</option>
+        </select>
+
+        <button (click)="addRoute()" [disabled]="loading">
+          {{ loading ? 'Adding...' : '➕ Add Route' }}
+        </button>
       </div>
 
+      <div class="card">
+        <h3>📋 Routes List 
+          <span *ngIf="loading" class="loading-spinner">⏳</span>
+        </h3>
+        
+        <div class="route-list">
+          <div *ngFor="let route of routes" class="route-item">
+            <div class="route-info">
+              <strong>{{ route.name }}</strong>
+              <span class="badge" [class]="route.status">
+                {{ route.status }}
+              </span>
+              <small>🚗 {{ route.congestionLevel }}% congestion</small>
+              <div class="quick-update">
+                <button class="update-btn" (click)="updateCongestion(route, 20)">20%</button>
+                <button class="update-btn" (click)="updateCongestion(route, 50)">50%</button>
+                <button class="update-btn" (click)="updateCongestion(route, 80)">80%</button>
+              </div>
+            </div>
+            <button class="delete-btn" (click)="deleteRoute(route.id)">
+              Delete
+            </button>
+          </div>
+          
+          <div *ngIf="routes.length === 0 && !loading" class="empty">
+            No routes yet. Add your first route!
+          </div>
+          
+          <div *ngIf="routes.length === 0 && loading" class="empty">
+            Loading routes from API...
+          </div>
+        </div>
+      </div>
     </div>
-
   </div>
-
 </div>

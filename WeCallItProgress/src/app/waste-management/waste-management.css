@@ -1,13 +1,15 @@
 :host {
   display: block;
-  min-height: 100vh;
-  background: linear-gradient(180deg, #0b1120 0%, #111827 45%, #1e293b 100%);
-  padding: 2rem;
+  height: 100%;
+  width: 100%;
+  overflow: auto;
 }
 
 .waste-dashboard {
-  min-height: 100vh;
+  min-height: 100%;
   color: #f3f4f6;
+  padding: 2rem;
+  background: linear-gradient(180deg, #0b1120 0%, #111827 45%, #1e293b 100%);
 }
 
 .waste-dashboard h1 {
@@ -101,7 +103,8 @@
 .secondary-btn,
 .edit-btn,
 .add-btn,
-.save-btn {
+.save-btn,
+.delete-btn {
   border: none;
   border-radius: 10px;
   padding: 0.75rem 1.2rem;
@@ -138,6 +141,16 @@
 
 .edit-btn:hover {
   background: linear-gradient(135deg, #4b5563, #6b7280);
+  transform: translateY(-2px);
+}
+
+.delete-btn {
+  background: linear-gradient(135deg, #dc2626, #ef4444);
+  color: white;
+}
+
+.delete-btn:hover {
+  background: linear-gradient(135deg, #b91c1c, #dc2626);
   transform: translateY(-2px);
 }
 
@@ -228,7 +241,7 @@
 }
 
 @media (max-width: 768px) {
-  :host {
+  .waste-dashboard {
     padding: 1rem;
   }
 
@@ -249,7 +262,8 @@
   .primary-btn,
   .secondary-btn,
   .edit-btn,
-  .add-btn {
+  .add-btn,
+  .delete-btn {
     width: 100%;
   }
 }

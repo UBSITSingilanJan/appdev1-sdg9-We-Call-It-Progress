@@ -2,3 +2,13 @@
   background-color: #f59e0b;
   color: #0f172a;
 }
+
+:host {
+  display: block;
+  flex-shrink: 0;
+}
+
+.nav-bar {
+  position: relative;
+  z-index: 100;
+}
