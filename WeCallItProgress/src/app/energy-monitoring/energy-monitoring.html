@@ -1,38 +1,54 @@
 <section class="energy-container">
-
-  <!-- HEADER -->
   <div class="header">
-    <h1>Energy Monitoring</h1>
-
+    <h1>⚡ Energy Monitoring System</h1>
     <div class="header-actions">
-      <button class="add-btn" (click)="toggleAdd()">Add</button>
-      <button class="refresh-btn" (click)="loadEnergy()">Refresh</button>
+      <button class="add-btn" (click)="toggleAdd()">+ Add Data</button>
+      <button class="refresh-btn" (click)="loadEnergy()">⟳ Refresh</button>
     </div>
   </div>
 
-  <!-- ADD FORM -->
   <div *ngIf="showAdd" class="add-form">
-    <input [(ngModel)]="newEnergy.location" placeholder="Location">
-    <input [(ngModel)]="newEnergy.consumption" type="number" placeholder="Consumption (kWh)">
-
+    <input [(ngModel)]="newEnergy.location" placeholder="Location name" autocomplete="off">
+    <input [(ngModel)]="newEnergy.consumption" type="number" placeholder="Consumption (kWh)" autocomplete="off">
     <button class="save-btn" (click)="addEnergy()">Save</button>
     <button class="cancel-btn" (click)="cancelAdd()">Cancel</button>
   </div>
 
-  <!-- CHART -->
+  <div class="stats-summary">
+    <div class="stat-summary-card">
+      <div class="stat-summary-value">{{ totalConsumption }} kWh</div>
+      <div class="stat-summary-label">Total Consumption</div>
+    </div>
+    <div class="stat-summary-card">
+      <div class="stat-summary-value">{{ avgConsumption }} kWh</div>
+      <div class="stat-summary-label">Average Consumption</div>
+    </div>
+    <div class="stat-summary-card">
+      <div class="stat-summary-value">{{ highestLocation }}</div>
+      <div class="stat-summary-label">Highest Consumer</div>
+    </div>
+  </div>
+
   <div class="chart-container">
     <canvas id="energyChart"></canvas>
   </div>
 
-  <!-- CARDS -->
+  <div class="chart-data">
+    <div class="chart-row" *ngFor="let item of energyData">
+      <span class="chart-location">📍 {{ item.location }}</span>
+      <span class="chart-consumption">{{ item.consumption }} kWh</span>
+    </div>
+    <div *ngIf="energyData.length === 0" style="text-align: center; color: #64748b; padding: 20px;">
+      No energy data available. Click "Add Data" to get started.
+    </div>
+  </div>
+
   <div class="energy-grid">
     <div class="energy-card" *ngFor="let item of energyData; trackBy: trackById">
       <h2>{{ item.location }}</h2>
       <p class="consumption">{{ item.consumption }} kWh</p>
-      <p class="timestamp">{{ item.timestamp | date:'short' }}</p>
-
+      <p class="timestamp">{{ item.timestamp | date:'medium' }}</p>
       <button class="delete-btn" (click)="deleteEnergy(item.id)">Delete</button>
     </div>
   </div>
-
 </section>

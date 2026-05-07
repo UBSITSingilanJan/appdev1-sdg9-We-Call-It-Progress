@@ -13,11 +13,11 @@ html, body {
   width: 100%;
   margin: 0;
   padding: 0;
+  overflow: hidden;
 }
 
 body {
   background: #0f172a;
-  overflow: hidden;
 }
 
 app-root {
@@ -25,6 +25,11 @@ app-root {
   flex-direction: column;
   height: 100%;
   width: 100%;
+  overflow: hidden;
+}
+
+app-nav-bar {
+  flex-shrink: 0;
 }
 
 router-outlet {
@@ -33,10 +38,10 @@ router-outlet {
 
 router-outlet + * {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  overflow: auto;
+  display: block;
+  overflow-y: auto;
+  overflow-x: hidden;
+  height: 100%;
 }
 
 .leaflet-container {

@@ -1,32 +1,31 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { ChangeDetectorRef } from '@angular/core';
 
-export interface GarbageCollectionSchedule {
+export interface Schedule {
   id: number;
   barangay: string;
   collectionDay: string;
   collectionTime: string;
   truckNumber: string;
   collectorName: string;
-  status: 'Scheduled' | 'Ongoing' | 'Completed' | 'Missed';
+  status: string;
 }
 
-export interface MissedPickupReport {
+export interface Report {
   id: number;
   residentName: string;
   contactNumber: string;
   barangay: string;
   address: string;
-  missedDate: Date;
+  missedDate: string;
   reason: string;
-  status: 'Pending' | 'Investigating' | 'Resolved';
-  reportedAt: Date;
+  status: string;
+  reportedAt: string;
 }
 
-export interface WasteTruckRoute {
+export interface Route {
   id: number;
   truckNumber: string;
   driverName: string;
@@ -35,39 +34,37 @@ export interface WasteTruckRoute {
   estimatedStartTime: string;
   estimatedEndTime: string;
   currentLocation: string;
-  status: 'Not Started' | 'In Progress' | 'Completed';
+  status: string;
 }
 
-
 @Component({
-  selector: 'app-smart-waste-management',
+  selector: 'app-waste-management',
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './waste-management.html',
   styleUrls: ['./waste-management.css']
 })
-export class WasteManagement implements OnInit {
+export class WasteManagement implements OnInit, OnDestroy {
   private apiUrl = 'http://localhost:3000';
+  private refreshInterval: any;
 
-  constructor(private http: HttpClient, private cdr: ChangeDetectorRef) {}
+  schedules: Schedule[] = [];
+  reports: Report[] = [];
+  routes: Route[] = [];
 
-  schedules: GarbageCollectionSchedule[] = [];
-  missedReports: MissedPickupReport[] = [];
-  routes: WasteTruckRoute[] = [];
+  selectedSchedule: Schedule | null = null;
+  selectedReport: Report | null = null;
+  selectedRoute: Route | null = null;
 
-  selectedSchedule: GarbageCollectionSchedule | null = null;
-  selectedReport: MissedPickupReport | null = null;
-  selectedRoute: WasteTruckRoute | null = null;
+  editingSchedule: Schedule | null = null;
+  editingReport: Report | null = null;
+  editingRoute: Route | null = null;
 
-  editingSchedule: GarbageCollectionSchedule | null = null;
-  editingReport: MissedPickupReport | null = null;
-  editingRoute: WasteTruckRoute | null = null;
+  showAddSchedule = false;
+  showAddReport = false;
+  showAddRoute = false;
 
-  showAddScheduleModal = false;
-  showAddReportModal = false;
-  showAddRouteModal = false;
-
-  newSchedule: GarbageCollectionSchedule = {
+  newSchedule: Schedule = {
     id: 0,
     barangay: '',
     collectionDay: '',
@@ -77,19 +74,19 @@ export class WasteManagement implements OnInit {
     status: 'Scheduled'
   };
 
-  newReport: MissedPickupReport = {
+  newReport: Report = {
     id: 0,
     residentName: '',
     contactNumber: '',
     barangay: '',
     address: '',
-    missedDate: new Date(),
+    missedDate: new Date().toISOString(),
     reason: '',
     status: 'Pending',
-    reportedAt: new Date()
+    reportedAt: new Date().toISOString()
   };
 
-  newRoute: WasteTruckRoute = {
+  newRoute: Route = {
     id: 0,
     truckNumber: '',
     driverName: '',
@@ -101,172 +98,320 @@ export class WasteManagement implements OnInit {
     status: 'Not Started'
   };
 
+  loading = {
+    schedules: false,
+    reports: false,
+    routes: false
+  };
+
+  error = {
+    schedules: '',
+    reports: '',
+    routes: ''
+  };
+
+  constructor(private http: HttpClient) {}
+
   ngOnInit(): void {
+  this.loadAllData();
+  this.startAutoRefresh();
+}
+
+  ngOnDestroy(): void {
+    if (this.refreshInterval) {
+      clearInterval(this.refreshInterval);
+    }
+  }
+
+  startAutoRefresh(): void {
+    this.refreshInterval = setInterval(() => {
+      this.loadAllData();
+    }, 30000);
+  }
+
+  loadAllData(): void {
     this.loadSchedules();
     this.loadReports();
     this.loadRoutes();
   }
 
   loadSchedules(): void {
-    this.http.get<GarbageCollectionSchedule[]>(`${this.apiUrl}/schedules`)
-      .subscribe(data => {
+    this.loading.schedules = true;
+    this.http.get<Schedule[]>(`${this.apiUrl}/schedules`).subscribe({
+      next: (data) => {
         this.schedules = data;
-        this.cdr.detectChanges();
-      });
+        this.loading.schedules = false;
+      },
+      error: (err) => {
+        console.error('Error loading schedules:', err);
+        this.error.schedules = 'Failed to load schedules';
+        this.loading.schedules = false;
+      }
+    });
   }
 
   loadReports(): void {
-    this.http.get<MissedPickupReport[]>(`${this.apiUrl}/reports`)
-      .subscribe(data => {
-        this.missedReports = data;
-        this.cdr.detectChanges();
-      });
+    this.loading.reports = true;
+    this.http.get<Report[]>(`${this.apiUrl}/reports`).subscribe({
+      next: (data) => {
+        this.reports = data;
+        this.loading.reports = false;
+      },
+      error: (err) => {
+        console.error('Error loading reports:', err);
+        this.error.reports = 'Failed to load reports';
+        this.loading.reports = false;
+      }
+    });
   }
 
   loadRoutes(): void {
-    this.http.get<WasteTruckRoute[]>(`${this.apiUrl}/routes`)
-      .subscribe(data => {
+    this.loading.routes = true;
+    this.http.get<Route[]>(`${this.apiUrl}/routes`).subscribe({
+      next: (data) => {
         this.routes = data;
-        this.cdr.detectChanges();
-      });
-  }
-
-  showScheduleDetails(schedule: any) {
-    this.selectedSchedule = schedule;
-  }
-
-  showReportDetails(report: any) {
-    this.selectedReport = report;
-  }
-
-  showRouteDetails(route: any) {
-    this.selectedRoute = route;
-  }
-
-  markScheduleCompleted(schedule: GarbageCollectionSchedule): void {
-    const updatedSchedule = {
-      ...schedule,
-      status: 'Completed' as const
-    };
-
-    this.http.put(`${this.apiUrl}/schedules/${schedule.id}`, updatedSchedule)
-      .subscribe(() => {
-        this.loadSchedules();
-      });
-  }
-
-  resolveReport(report: MissedPickupReport): void {
-    const updatedReport = {
-      ...report,
-      status: 'Resolved' as const
-    };
-
-    this.http.put(`${this.apiUrl}/reports/${report.id}`, updatedReport)
-      .subscribe(() => {
-        this.loadReports();
-      });
-  }
-
-  markRouteCompleted(route: WasteTruckRoute): void {
-    const updatedRoute = {
-      ...route,
-      status: 'Completed' as const
-    };
-
-    this.http.put(`${this.apiUrl}/routes/${route.id}`, updatedRoute)
-      .subscribe(() => {
-        this.loadRoutes();
-      });
-  }
-
-  editSchedule(schedule: GarbageCollectionSchedule): void {
-    this.editingSchedule = { ...schedule };
-  }
-
-  saveSchedule(): void {
-    if (!this.editingSchedule) return;
-
-    this.http.put(
-      `${this.apiUrl}/schedules/${this.editingSchedule.id}`,
-      this.editingSchedule
-    ).subscribe(() => {
-      this.loadSchedules();
-      this.editingSchedule = null;
-    });
-  }
-
-  editReport(report: MissedPickupReport): void {
-    this.editingReport = { ...report };
-  }
-
-  saveReport(): void {
-    if (!this.editingReport) return;
-
-    this.http.put(
-      `${this.apiUrl}/reports/${this.editingReport.id}`,
-      this.editingReport
-    ).subscribe(() => {
-      this.loadReports();
-      this.editingReport = null;
-    });
-  }
-
-  editRoute(route: WasteTruckRoute): void {
-    this.editingRoute = { ...route };
-  }
-
-  saveRoute(): void {
-    if (!this.editingRoute) return;
-
-    this.http.put(
-      `${this.apiUrl}/routes/${this.editingRoute.id}`,
-      this.editingRoute
-    ).subscribe(() => {
-      this.loadRoutes();
-      this.editingRoute = null;
+        this.loading.routes = false;
+      },
+      error: (err) => {
+        console.error('Error loading routes:', err);
+        this.error.routes = 'Failed to load routes';
+        this.loading.routes = false;
+      }
     });
   }
 
   addSchedule(): void {
-  this.http.post(`${this.apiUrl}/schedules`, this.newSchedule)
-    .subscribe(() => {
-      this.loadSchedules();
-      this.showAddScheduleModal = false;
-      this.cdr.detectChanges();
+    if (!this.newSchedule.barangay || !this.newSchedule.collectionDay) {
+      alert('Please fill in all required fields');
+      return;
+    }
+    this.http.post(`${this.apiUrl}/schedules`, this.newSchedule).subscribe({
+      next: () => {
+        this.loadSchedules();
+        this.showAddSchedule = false;
+        this.resetNewSchedule();
+        alert('Schedule added successfully');
+      },
+      error: (err) => {
+        console.error('Error:', err);
+        alert('Failed to add schedule');
+      }
     });
-}
+  }
 
-addReport(): void {
-  this.http.post(`${this.apiUrl}/reports`, this.newReport)
-    .subscribe(() => {
-      this.loadReports();
-      this.showAddReportModal = false;
-      this.cdr.detectChanges();
+  addReport(): void {
+    if (!this.newReport.residentName || !this.newReport.barangay) {
+      alert('Please fill in all required fields');
+      return;
+    }
+    const reportToSend = {
+      ...this.newReport,
+      missedDate: new Date().toISOString(),
+      reportedAt: new Date().toISOString()
+    };
+    this.http.post(`${this.apiUrl}/reports`, reportToSend).subscribe({
+      next: () => {
+        this.loadReports();
+        this.showAddReport = false;
+        this.resetNewReport();
+        alert('Report added successfully');
+      },
+      error: (err) => {
+        console.error('Error:', err);
+        alert('Failed to add report');
+      }
     });
-}
+  }
 
-addRoute(): void {
-  this.http.post(`${this.apiUrl}/routes`, this.newRoute)
-    .subscribe(() => {
-      this.loadRoutes();
-      this.showAddRouteModal = false;
-      this.cdr.detectChanges();
+  addRoute(): void {
+    if (!this.newRoute.truckNumber || !this.newRoute.driverName) {
+      alert('Please fill in all required fields');
+      return;
+    }
+    this.http.post(`${this.apiUrl}/routes`, this.newRoute).subscribe({
+      next: () => {
+        this.loadRoutes();
+        this.showAddRoute = false;
+        this.resetNewRoute();
+        alert('Route added successfully');
+      },
+      error: (err) => {
+        console.error('Error:', err);
+        alert('Failed to add route');
+      }
     });
-}
+  }
 
   deleteSchedule(id: number): void {
-    this.schedules = this.schedules.filter(s => s.id !== id);
-    this.http.delete(`${this.apiUrl}/schedules/${id}`).subscribe();
+    if (confirm('Are you sure you want to delete this schedule?')) {
+      this.http.delete(`${this.apiUrl}/schedules/${id}`).subscribe({
+        next: () => {
+          this.loadSchedules();
+          alert('Schedule deleted successfully');
+        },
+        error: (err) => {
+          console.error('Error:', err);
+          alert('Failed to delete schedule');
+        }
+      });
+    }
   }
 
   deleteReport(id: number): void {
-    this.missedReports = this.missedReports.filter(r => r.id !== id);
-    this.http.delete(`${this.apiUrl}/reports/${id}`).subscribe();
+    if (confirm('Are you sure you want to delete this report?')) {
+      this.http.delete(`${this.apiUrl}/reports/${id}`).subscribe({
+        next: () => {
+          this.loadReports();
+          alert('Report deleted successfully');
+        },
+        error: (err) => {
+          console.error('Error:', err);
+          alert('Failed to delete report');
+        }
+      });
+    }
   }
 
   deleteRoute(id: number): void {
-    this.routes = this.routes.filter(r => r.id !== id);
-    this.http.delete(`${this.apiUrl}/routes/${id}`).subscribe();
+    if (confirm('Are you sure you want to delete this route?')) {
+      this.http.delete(`${this.apiUrl}/routes/${id}`).subscribe({
+        next: () => {
+          this.loadRoutes();
+          alert('Route deleted successfully');
+        },
+        error: (err) => {
+          console.error('Error:', err);
+          alert('Failed to delete route');
+        }
+      });
+    }
+  }
+
+  updateScheduleStatus(schedule: Schedule, newStatus: string): void {
+    const updated = { ...schedule, status: newStatus };
+    this.http.put(`${this.apiUrl}/schedules/${schedule.id}`, updated).subscribe({
+      next: () => { this.loadSchedules(); },
+      error: (err) => { console.error('Error:', err); }
+    });
+  }
+
+  updateReportStatus(report: Report, newStatus: string): void {
+    const updated = { ...report, status: newStatus };
+    this.http.put(`${this.apiUrl}/reports/${report.id}`, updated).subscribe({
+      next: () => { this.loadReports(); },
+      error: (err) => { console.error('Error:', err); }
+    });
+  }
+
+  updateRouteStatus(route: Route, newStatus: string): void {
+    const updated = { ...route, status: newStatus };
+    this.http.put(`${this.apiUrl}/routes/${route.id}`, updated).subscribe({
+      next: () => { this.loadRoutes(); },
+      error: (err) => { console.error('Error:', err); }
+    });
+  }
+
+  editSchedule(schedule: Schedule): void {
+    this.editingSchedule = { ...schedule };
+  }
+
+  saveSchedule(): void {
+    if (this.editingSchedule) {
+      this.http.put(`${this.apiUrl}/schedules/${this.editingSchedule.id}`, this.editingSchedule).subscribe({
+        next: () => {
+          this.loadSchedules();
+          this.editingSchedule = null;
+          alert('Schedule updated successfully');
+        },
+        error: (err) => { console.error('Error:', err); }
+      });
+    }
+  }
+
+  editReport(report: Report): void {
+    this.editingReport = { ...report };
+  }
+
+  saveReport(): void {
+    if (this.editingReport) {
+      this.http.put(`${this.apiUrl}/reports/${this.editingReport.id}`, this.editingReport).subscribe({
+        next: () => {
+          this.loadReports();
+          this.editingReport = null;
+          alert('Report updated successfully');
+        },
+        error: (err) => { console.error('Error:', err); }
+      });
+    }
+  }
+
+  editRoute(route: Route): void {
+    this.editingRoute = { ...route };
+  }
+
+  saveRoute(): void {
+    if (this.editingRoute) {
+      this.http.put(`${this.apiUrl}/routes/${this.editingRoute.id}`, this.editingRoute).subscribe({
+        next: () => {
+          this.loadRoutes();
+          this.editingRoute = null;
+          alert('Route updated successfully');
+        },
+        error: (err) => { console.error('Error:', err); }
+      });
+    }
+  }
+
+  viewSchedule(schedule: Schedule): void {
+    this.selectedSchedule = schedule;
+  }
+
+  viewReport(report: Report): void {
+    this.selectedReport = report;
+  }
+
+  viewRoute(route: Route): void {
+    this.selectedRoute = route;
+  }
+
+  resetNewSchedule(): void {
+    this.newSchedule = {
+      id: 0,
+      barangay: '',
+      collectionDay: '',
+      collectionTime: '',
+      truckNumber: '',
+      collectorName: '',
+      status: 'Scheduled'
+    };
+  }
+
+  resetNewReport(): void {
+    this.newReport = {
+      id: 0,
+      residentName: '',
+      contactNumber: '',
+      barangay: '',
+      address: '',
+      missedDate: new Date().toISOString(),
+      reason: '',
+      status: 'Pending',
+      reportedAt: new Date().toISOString()
+    };
+  }
+
+  resetNewRoute(): void {
+    this.newRoute = {
+      id: 0,
+      truckNumber: '',
+      driverName: '',
+      assignedArea: '',
+      routeStops: [],
+      estimatedStartTime: '',
+      estimatedEndTime: '',
+      currentLocation: '',
+      status: 'Not Started'
+    };
   }
 
   closeModals(): void {
@@ -276,11 +421,20 @@ addRoute(): void {
     this.editingSchedule = null;
     this.editingReport = null;
     this.editingRoute = null;
-    this.showAddScheduleModal = false;
-    this.showAddReportModal = false;
-    this.showAddRouteModal = false;
+    this.showAddSchedule = false;
+    this.showAddReport = false;
+    this.showAddRoute = false;
   }
+
+  getPendingReportsCount(): number {
+    return this.reports.filter(r => r.status === 'Pending').length;
+  }
+
+  getCompletedSchedulesCount(): number {
+    return this.schedules.filter(s => s.status === 'Completed').length;
+  }
+
   trackById(index: number, item: any): number {
     return item.id;
-  } 
+  }
 }
