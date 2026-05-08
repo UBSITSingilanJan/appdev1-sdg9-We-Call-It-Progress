@@ -4,7 +4,7 @@
 
 .intro-container {
   min-height: calc(100vh - 100px);
-  background: #0f1a2c;
+  background: #1e293b;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -21,23 +21,25 @@
   width: 100%;
   height: 100%;
   background-image: 
-    repeating-linear-gradient(45deg, rgba(255, 107, 74, 0.05) 0px, rgba(255, 107, 74, 0.05) 2px, transparent 2px, transparent 8px),
-    repeating-linear-gradient(135deg, rgba(226, 114, 91, 0.03) 0px, rgba(226, 114, 91, 0.03) 1px, transparent 1px, transparent 6px);
+    repeating-linear-gradient(45deg, rgba(255, 107, 74, 0.06) 0px, rgba(255, 107, 74, 0.06) 2px, transparent 2px, transparent 8px),
+    repeating-linear-gradient(135deg, rgba(255, 107, 74, 0.04) 0px, rgba(255, 107, 74, 0.04) 1px, transparent 1px, transparent 6px),
+    repeating-linear-gradient(90deg, rgba(255, 107, 74, 0.05) 0px, rgba(255, 107, 74, 0.05) 1px, transparent 1px, transparent 12px);
   pointer-events: none;
 }
 
 .intro-card {
-  background: #1a2a3a;
+  background: #334155;
   padding: 45px;
   border-radius: 24px;
   max-width: 650px;
   width: 100%;
   text-align: center;
-  color: #e2e8f0;
-  box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
-  border: 1px solid rgba(255, 107, 74, 0.2);
+  color: #f1f5f9;
+  box-shadow: 0 25px 50px -12px rgba(0,0,0,0.4);
+  border: 1px solid rgba(255, 107, 74, 0.3);
   position: relative;
   z-index: 1;
+  backdrop-filter: blur(2px);
 }
 
 .sdg-badge {
@@ -46,7 +48,7 @@
   padding: 8px 24px;
   border-radius: 40px;
   margin-bottom: 25px;
-  color: #0f1a2c;
+  color: #1e293b;
   font-weight: bold;
   font-size: 14px;
   letter-spacing: 1.5px;
@@ -98,12 +100,12 @@
 
 .feature-list {
   text-align: left;
-  background: rgba(15, 26, 44, 0.6);
+  background: rgba(30, 41, 59, 0.6);
   padding: 22px 25px;
   border-radius: 16px;
   margin-bottom: 30px;
-  border: 1px solid rgba(255, 107, 74, 0.15);
-  box-shadow: inset 0 1px 3px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.05);
+  border: 1px solid rgba(255, 107, 74, 0.2);
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.05), 0 2px 4px rgba(0,0,0,0.05);
 }
 
 .feature {
@@ -127,7 +129,7 @@
   border: none;
   padding: 14px 36px;
   border-radius: 60px;
-  color: #0f1a2c;
+  color: #1e293b;
   cursor: pointer;
   font-weight: bold;
   font-size: 16px;
@@ -137,7 +139,7 @@
 
 .cta-button:hover {
   background: #e85a3a;
-  color: #0f1a2c;
+  color: #1e293b;
   transform: translateY(-3px);
   box-shadow: 0 8px 20px rgba(255, 107, 74, 0.4);
 }
@@ -161,5 +163,11 @@
   
   .feature {
     font-size: 12px;
+  }
+  
+  .intro-container::before {
+    background-image: 
+      repeating-linear-gradient(45deg, rgba(255, 107, 74, 0.08) 0px, rgba(255, 107, 74, 0.08) 1px, transparent 1px, transparent 6px),
+      repeating-linear-gradient(135deg, rgba(255, 107, 74, 0.05) 0px, rgba(255, 107, 74, 0.05) 1px, transparent 1px, transparent 5px);
   }
 }
