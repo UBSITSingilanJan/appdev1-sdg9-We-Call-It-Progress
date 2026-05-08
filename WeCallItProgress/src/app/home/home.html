@@ -1,23 +1,34 @@
 <div class="intro-container">
   <div class="intro-card">
-    <h1>Welcome to SDG 9 Smart City System</h1>
-
-    <p>
-      This application is designed to support 
-      <strong>Sustainable Development Goal 9</strong> by improving 
-      <strong>Industry, Innovation, and Infrastructure</strong> through smart technologies.
+    <div class="sdg-badge">
+      <span class="sdg-number">SDG 9</span>
+    </div>
+    
+    <h1>Smart City Command Center</h1>
+    
+    <div class="icon-row">
+      <span class="icon">🚦</span>
+      <span class="icon">🚍</span>
+      <span class="icon">🗑️</span>
+      <span class="icon">⚡</span>
+      <span class="icon">🏗️</span>
+    </div>
+    
+    <p class="description">
+      <strong>Sustainable Development Goal 9</strong> drives innovation in urban infrastructure. 
+      Our platform integrates real-time monitoring of waste collection, public transport, 
+      energy usage, and traffic flow to build smarter, more sustainable cities.
     </p>
-
-    <p>
-      The system provides real-time tools for managing urban services such as 
-      waste collection, transportation tracking, energy monitoring, and infrastructure reporting.
-    </p>
-
-    <p>
-      By integrating these services into one platform, the application helps cities 
-      become more efficient, sustainable, and responsive to community needs.
-    </p>
-
-    <button (click)="goToAdmin()">Go to Admin Panel</button>
+    
+    <div class="feature-list">
+      <div class="feature">✅ Real-time vehicle tracking</div>
+      <div class="feature">✅ Live congestion monitoring</div>
+      <div class="feature">✅ Energy consumption analytics</div>
+      <div class="feature">✅ Infrastructure issue reporting</div>
+    </div>
+    
+    <button class="cta-button" (click)="goToAdmin()">
+      Launch Admin Panel →
+    </button>
   </div>
 </div>

@@ -1,1 +1,72 @@
-<p>energy-monitoring works!</p>
+<section class="energy-container">
+  <div class="header">
+    <h1>⚡ Energy Monitoring System</h1>
+    <div class="header-actions">
+      <button class="add-btn" (click)="toggleAdd()">+ Add Data</button>
+      <button class="refresh-btn" (click)="loadEnergy()">⟳ Refresh</button>
+    </div>
+  </div>
+
+  <div *ngIf="showAdd" class="add-form">
+    <input [(ngModel)]="newEnergy.location" placeholder="Location name" autocomplete="off">
+    <input [(ngModel)]="newEnergy.consumption" type="number" placeholder="Consumption (kWh)" autocomplete="off">
+    <button class="save-btn" (click)="addEnergy()">Save</button>
+    <button class="cancel-btn" (click)="cancelAdd()">Cancel</button>
+  </div>
+
+  <div class="stats-summary">
+    <div class="stat-summary-card">
+      <div class="stat-summary-value">{{ totalConsumption }} kWh</div>
+      <div class="stat-summary-label">Total Consumption</div>
+    </div>
+    <div class="stat-summary-card">
+      <div class="stat-summary-value">{{ avgConsumption }} kWh</div>
+      <div class="stat-summary-label">Average Consumption</div>
+    </div>
+    <div class="stat-summary-card">
+      <div class="stat-summary-value">{{ highestLocation }}</div>
+      <div class="stat-summary-label">Highest Consumer</div>
+    </div>
+  </div>
+
+  <div class="chart-container">
+    <canvas id="energyChart"></canvas>
+  </div>
+
+  <div class="chart-data">
+    <div class="chart-row" *ngFor="let item of energyData">
+      <span class="chart-location">📍 {{ item.location }}</span>
+      <span class="chart-consumption">{{ item.consumption }} kWh</span>
+    </div>
+    <div *ngIf="energyData.length === 0" style="text-align: center; color: #64748b; padding: 20px;">
+      No energy data available. Click "Add Data" to get started.
+    </div>
+  </div>
+
+  <div class="energy-grid">
+    <div class="energy-card" *ngFor="let item of energyData; trackBy: trackById">
+      <h2>{{ item.location }}</h2>
+      <p class="consumption">{{ item.consumption }} kWh</p>
+      <p class="timestamp">{{ item.timestamp | date:'medium' }}</p>
+      <button class="delete-btn" (click)="confirmDelete(item.id, item.location)">Delete</button>
+    </div>
+  </div>
+</section>
+
+<div class="modal-overlay" *ngIf="showDeleteModal" (click)="closeDeleteModal()">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <span class="modal-icon">🗑️</span>
+      <h2>Delete Confirmation</h2>
+      <button class="modal-close" (click)="closeDeleteModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <p>Are you sure you want to delete <strong>{{ deleteItemLocation }}</strong>?</p>
+      <p>This action cannot be undone.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" (click)="closeDeleteModal()">Cancel</button>
+      <button class="btn-confirm" (click)="deleteEnergy()">Delete</button>
+    </div>
+  </div>
+</div>

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 
 @Component({
@@ -7,8 +7,15 @@ import { Router } from '@angular/router';
   templateUrl: './admin-panel.html',
   styleUrls: ['./admin-panel.css']
 })
-export class AdminPanel {
+export class AdminPanel implements OnInit {
   constructor(private router: Router) {}
+
+  ngOnInit() {
+    const container = document.querySelector('.home-container') as HTMLElement;
+    if (container) {
+      container.style.minHeight = window.innerHeight + 'px';
+    }
+  }
 
   go(route: string) {
     this.router.navigate([`/${route}`]);

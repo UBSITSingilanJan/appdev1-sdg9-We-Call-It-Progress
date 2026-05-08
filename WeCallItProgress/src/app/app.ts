@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, AfterViewInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { NavBar } from './nav-bar/nav-bar';
 
@@ -8,8 +8,17 @@ import { NavBar } from './nav-bar/nav-bar';
   standalone: true,
   imports: [RouterOutlet, NavBar],
   templateUrl: './app.html',
+  styleUrls: ['./app.css']
 })
+export class AppComponent implements AfterViewInit {
+  title = 'We Call It Progress';
 
-export class App {
-  protected readonly title = signal('WeCallItProgress');
+  ngAfterViewInit() {
+    // Force check for scroll
+    const mainContent = document.querySelector('.main-content');
+    if (mainContent) {
+      console.log('Main content height:', mainContent.scrollHeight);
+      console.log('Main content client height:', mainContent.clientHeight);
+    }
+  }
 }

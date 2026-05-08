@@ -1,0 +1,130 @@
+{
+  "schedules": [
+    {
+      "id": 1,
+      "barangay": "a",
+      "collectionDay": "a",
+      "collectionTime": "a",
+      "truckNumber": "a",
+      "collectorName": "a",
+      "status": "Completed"
+    },
+    {
+      "id": 2,
+      "barangay": "a",
+      "collectionDay": "a",
+      "collectionTime": "a",
+      "truckNumber": "a",
+      "collectorName": "a",
+      "status": "Completed"
+    }
+  ],
+  "reports": [
+    {
+      "id": 1,
+      "residentName": "a",
+      "contactNumber": "a",
+      "barangay": "a",
+      "address": "a",
+      "reason": "a",
+      "status": "Resolved",
+      "reportedAt": "2026-05-08T13:05:33.939Z"
+    }
+  ],
+  "wasteRoutes": [],
+  "routes": [
+    {
+      "id": 1,
+      "name": "hatdog",
+      "status": "normal",
+      "congestionLevel": 20,
+      "lat": 16.4033641891146,
+      "lng": 120.61605956742807
+    },
+    {
+      "id": 2,
+      "name": "dadsad",
+      "status": "blocked",
+      "congestionLevel": 20,
+      "lat": 16.411326216084124,
+      "lng": 120.5949369802936
+    },
+    {
+      "id": 3,
+      "name": "dasda",
+      "status": "normal",
+      "congestionLevel": "80",
+      "lat": 16.40448918364043,
+      "lng": 120.6031745342159
+    }
+  ],
+  "energyData": [
+    {
+      "id": 1,
+      "location": "dad",
+      "consumption": 99,
+      "timestamp": "2026-05-08T13:44:22.042Z"
+    },
+    {
+      "id": 2,
+      "location": "sdasd",
+      "consumption": 83,
+      "timestamp": "2026-05-08T13:44:30.759Z"
+    },
+    {
+      "id": 3,
+      "location": "dahdsd",
+      "consumption": 81,
+      "timestamp": "2026-05-08T14:39:11.659Z"
+    }
+  ],
+  "vehicles": [
+    {
+      "id": 1,
+      "type": "Jeepney",
+      "route": "da",
+      "vehicleNumber": "12",
+      "driver": "gaga",
+      "status": "active",
+      "speed": 0,
+      "occupancy": 0,
+      "lat": 16.3923465154375,
+      "lng": 120.61437686707256,
+      "nextStop": "Starting point",
+      "eta": "0 mins",
+      "lastUpdate": "2026-05-08T14:23:15.529Z"
+    },
+    {
+      "id": 2,
+      "type": "Jeepney",
+      "route": "hatdog",
+      "vehicleNumber": "sad",
+      "driver": "sdadsad",
+      "status": "active",
+      "speed": 0,
+      "occupancy": 0,
+      "lat": 16.408098600550677,
+      "lng": 120.6227387476165,
+      "nextStop": "Starting point",
+      "eta": "0 mins",
+      "lastUpdate": "2026-05-08T14:28:37.923Z"
+    },
+    {
+      "id": 3,
+      "type": "Jeepney",
+      "route": "sdads",
+      "vehicleNumber": "dsa",
+      "driver": "sda",
+      "status": "active",
+      "speed": 0,
+      "occupancy": 0,
+      "lat": 16.40150956642614,
+      "lng": 120.61772918407581,
+      "nextStop": "Starting point",
+      "eta": "0 mins",
+      "lastUpdate": "2026-05-08T14:40:14.941Z"
+    }
+  ],
+  "infrastructureIssues": [],
+  "maintenanceTeams": []
+}

@@ -1,1 +1,88 @@
-<p>smart-traffic-management works!</p>
+<div class="traffic-page">
+  <div class="header">
+    <h2>🚦 Smart Traffic Management - Baguio City</h2>
+    <p>SDG 9: Industry, Innovation & Infrastructure | Monitor traffic congestion in Baguio City</p>
+  </div>
+
+  <div class="content-wrapper">
+    <div class="map-section">
+      <div #mapContainer class="map-container"></div>
+    </div>
+
+    <div class="controls-section">
+      <div class="card">
+        <h3>➕ Add New Route</h3>
+        
+        <div *ngIf="!isAddingRoute; else addRouteForm">
+          <button class="start-add-btn" (click)="startAddRoute()">📍 Click to Place Pin on Map</button>
+        </div>
+        
+        <ng-template #addRouteForm>
+          <div class="add-route-instruction">
+            <p>📍 Click anywhere on the map to place a pin</p>
+            <p *ngIf="selectedLat && selectedLng" class="pin-placed">
+              ✓ Pin placed at: {{ selectedLat | number:'1.4-4' }}, {{ selectedLng | number:'1.4-4' }}
+            </p>
+            <p *ngIf="!selectedLat || !selectedLng" class="pin-waiting">
+              ⚠️ Waiting for pin placement...
+            </p>
+          </div>
+          
+          <input type="text" placeholder="Route name" [(ngModel)]="newRoute.name">
+          
+          <select [(ngModel)]="newRoute.status">
+            <option value="normal">🟢 Normal</option>
+            <option value="heavy">🟠 Heavy</option>
+            <option value="blocked">🔴 Blocked</option>
+          </select>
+          
+          <select [(ngModel)]="newRoute.congestionLevel">
+            <option value="20">20% - Light traffic</option>
+            <option value="50">50% - Moderate</option>
+            <option value="80">80% - Heavy</option>
+            <option value="95">95% - Gridlock</option>
+          </select>
+          
+          <div class="add-route-buttons">
+            <button class="cancel-add-btn" (click)="cancelAddRoute()">Cancel</button>
+            <button class="submit-add-btn" (click)="addRoute()" [disabled]="!selectedLat || !selectedLng || !newRoute.name.trim()">
+              Save Route
+            </button>
+          </div>
+        </ng-template>
+      </div>
+
+      <div class="card">
+        <h3>📋 Routes List (Baguio City)</h3>
+        <div class="route-list">
+          <div *ngFor="let route of routes" class="route-item">
+            <div class="route-info">
+              <strong>{{ route.name }}</strong>
+              <span class="badge" [class]="route.status">{{ route.status }}</span>
+              <small>🚗 {{ route.congestionLevel }}% congestion</small>
+              <small *ngIf="route.lat && route.lng" class="coords">📍 {{ route.lat | number:'1.4-4' }}, {{ route.lng | number:'1.4-4' }}</small>
+            </div>
+            <button class="delete-btn" (click)="deleteRoute(route.id)">Delete</button>
+          </div>
+          <div *ngIf="routes.length === 0" class="empty">No routes yet. Click "Add Route" to create one!</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" *ngIf="showErrorModal" (click)="closeErrorModal()">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <span class="modal-icon">{{ errorMessageText.includes('successfully') ? '✅' : '❌' }}</span>
+      <h2>{{ errorMessageText.includes('successfully') ? 'Success' : 'Error' }}</h2>
+      <button class="modal-close" (click)="closeErrorModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <p>{{ errorMessageText }}</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-confirm" (click)="closeErrorModal()">OK</button>
+    </div>
+  </div>
+</div>

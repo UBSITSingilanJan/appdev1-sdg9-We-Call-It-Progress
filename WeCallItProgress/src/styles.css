@@ -2,20 +2,45 @@
 @tailwind components;
 @tailwind utilities;
 
-html, body {
-  height: 100%;
+* {
   margin: 0;
-  overflow: hidden;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: auto !important;
+  min-height: 100vh;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: #0f172a;
+  overflow-y: scroll !important;
 }
 
 app-root {
-  height: 100%;
   display: block;
-  overflow: hidden;
+  min-height: 100vh;
 }
 
-router-outlet + * {
+.leaflet-container {
+  width: 100%;
   height: 100%;
-  display: block;
-  overflow: hidden;
+  background: #1e293b;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1e293b;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #f97316;
+  border-radius: 5px;
 }

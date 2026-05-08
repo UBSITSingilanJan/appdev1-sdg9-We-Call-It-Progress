@@ -1,34 +1,87 @@
 <div class="home-container">
   <div class="hero">
+    <div class="hero-badge">
+      <span>⚡ COMMAND CENTER</span>
+    </div>
     <h1>SDG 9 Smart City Admin Panel</h1>
-    <p>Manage all smart city systems in one place</p>
+    <p>Manage all smart city systems in one unified dashboard</p>
+  </div>
+
+  <div class="stats-banner">
+    <div class="stat-item">
+      <div class="stat-icon">🏙️</div>
+      <div class="stat-info">
+        <div class="stat-number">5</div>
+        <div class="stat-label">Active Modules</div>
+      </div>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat-item">
+      <div class="stat-icon">🟢</div>
+      <div class="stat-info">
+        <div class="stat-number">100%</div>
+        <div class="stat-label">System Uptime</div>
+      </div>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat-item">
+      <div class="stat-icon">📊</div>
+      <div class="stat-info">
+        <div class="stat-number">24/7</div>
+        <div class="stat-label">Real-time Monitoring</div>
+      </div>
+    </div>
   </div>
 
   <div class="cards">
-
     <div class="home-card" (click)="go('waste-management')">
+      <div class="card-icon">🗑️</div>
       <h2>Waste Management</h2>
       <p>Manage schedules, routes, and reports</p>
+      <div class="card-footer">
+        <span class="status active">Active</span>
+        <span class="arrow">→</span>
+      </div>
     </div>
 
     <div class="home-card" (click)="go('energy-monitoring')">
+      <div class="card-icon">⚡</div>
       <h2>Energy Monitoring</h2>
       <p>Track energy usage and efficiency</p>
+      <div class="card-footer">
+        <span class="status active">Active</span>
+        <span class="arrow">→</span>
+      </div>
     </div>
 
     <div class="home-card" (click)="go('smart-traffic-management')">
+      <div class="card-icon">🚦</div>
       <h2>Smart Traffic</h2>
       <p>Optimize traffic flow and reduce congestion</p>
+      <div class="card-footer">
+        <span class="status active">Active</span>
+        <span class="arrow">→</span>
+      </div>
     </div>
 
     <div class="home-card" (click)="go('public-transport-tracking')">
+      <div class="card-icon">🚍</div>
       <h2>Transport Tracking</h2>
       <p>Monitor public transport in real-time</p>
+      <div class="card-footer">
+        <span class="status active">Active</span>
+        <span class="arrow">→</span>
+      </div>
     </div>
 
     <div class="home-card" (click)="go('infrastructure-reporting')">
+      <div class="card-icon">🏗️</div>
       <h2>Infrastructure</h2>
       <p>Report and track infrastructure issues</p>
+      <div class="card-footer">
+        <span class="status active">Active</span>
+        <span class="arrow">→</span>
+      </div>
     </div>
   </div>
 </div>
