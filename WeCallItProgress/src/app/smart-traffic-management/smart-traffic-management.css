@@ -1,16 +1,33 @@
 .traffic-page {
-  background: #0f172a;
+  background: #0f1a2c;
   padding: 20px;
   min-height: calc(100vh - 80px);
+  position: relative;
+  overflow: hidden;
+}
+
+.traffic-page::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    repeating-linear-gradient(45deg, rgba(255, 107, 74, 0.05) 0px, rgba(255, 107, 74, 0.05) 2px, transparent 2px, transparent 8px),
+    repeating-linear-gradient(135deg, rgba(255, 107, 74, 0.03) 0px, rgba(255, 107, 74, 0.03) 1px, transparent 1px, transparent 6px);
+  pointer-events: none;
 }
 
 .header {
-  background: linear-gradient(135deg, #0f172a, #1e293b);
+  background: linear-gradient(135deg, #1a2a3a, #0f1a2c);
   color: white;
   padding: 15px 25px;
-  border-bottom: 2px solid #f97316;
+  border-bottom: 2px solid #FF6B4A;
   margin-bottom: 20px;
   border-radius: 12px;
+  position: relative;
+  z-index: 1;
 }
 
 .header h2 {
@@ -27,12 +44,14 @@
   display: flex;
   gap: 20px;
   flex-wrap: wrap;
+  position: relative;
+  z-index: 1;
 }
 
 .map-section {
   flex: 2;
   min-width: 300px;
-  background: #1e293b;
+  background: #1a2a3a;
   border-radius: 16px;
   overflow: hidden;
   height: 70vh;
@@ -52,17 +71,17 @@
 }
 
 .card {
-  background: #1e293b;
+  background: #1a2a3a;
   border-radius: 16px;
   padding: 20px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.3);
 }
 
 .card h3 {
-  color: #f97316;
+  color: #FF6B4A;
   margin-bottom: 15px;
   font-size: 1.2rem;
-  border-left: 3px solid #f97316;
+  border-left: 3px solid #FF6B4A;
   padding-left: 12px;
 }
 
@@ -85,8 +104,8 @@
 }
 
 .add-route-instruction {
-  background: rgba(249, 115, 22, 0.15);
-  border: 1px solid #f97316;
+  background: rgba(255, 107, 74, 0.15);
+  border: 1px solid #FF6B4A;
   border-radius: 12px;
   padding: 12px;
   margin-bottom: 15px;
@@ -105,7 +124,7 @@
 }
 
 .pin-waiting {
-  color: #f97316 !important;
+  color: #FF6B4A !important;
   font-weight: bold;
 }
 
@@ -115,14 +134,14 @@ input, select {
   margin: 8px 0;
   border-radius: 8px;
   border: 1px solid #334155;
-  background: #0f172a;
+  background: #0f1a2c;
   color: white;
   font-size: 14px;
 }
 
 input:focus, select:focus {
   outline: none;
-  border-color: #f97316;
+  border-color: #FF6B4A;
 }
 
 .add-route-buttons {
@@ -150,7 +169,7 @@ input:focus, select:focus {
 .submit-add-btn {
   flex: 1;
   padding: 10px;
-  background: linear-gradient(135deg, #f97316, #ea580c);
+  background: linear-gradient(135deg, #FF6B4A, #e85a3a);
   color: white;
   border: none;
   border-radius: 8px;
@@ -161,7 +180,7 @@ input:focus, select:focus {
 
 .submit-add-btn:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.4);
+  box-shadow: 0 4px 12px rgba(255, 107, 74, 0.4);
 }
 
 .submit-add-btn:disabled {
@@ -175,7 +194,7 @@ input:focus, select:focus {
 }
 
 .route-item {
-  background: #0f172a;
+  background: #0f1a2c;
   padding: 12px;
   margin-bottom: 10px;
   border-radius: 12px;
@@ -211,7 +230,7 @@ input:focus, select:focus {
 }
 
 .badge.heavy {
-  background: #f97316;
+  background: #FF6B4A;
   color: white;
 }
 
@@ -261,7 +280,7 @@ small {
 .leaflet-container {
   width: 100%;
   height: 100%;
-  background: #1e293b;
+  background: #1a2a3a;
 }
 
 .modal-overlay {
@@ -279,8 +298,8 @@ small {
 }
 
 .modal-card {
-  background: linear-gradient(145deg, #1e293b, #0f172a);
-  border: 2px solid #f97316;
+  background: linear-gradient(145deg, #1a2a3a, #0f1a2c);
+  border: 2px solid #FF6B4A;
   border-radius: 24px;
   width: 90%;
   max-width: 400px;
@@ -314,7 +333,7 @@ small {
 }
 
 .modal-header h2 {
-  color: #f97316;
+  color: #FF6B4A;
   margin: 0;
   flex: 1;
   font-size: 1.3rem;
@@ -336,7 +355,7 @@ small {
 }
 
 .modal-close:hover {
-  color: #f97316;
+  color: #FF6B4A;
 }
 
 .modal-body {
@@ -350,7 +369,7 @@ small {
 }
 
 .modal-body strong {
-  color: #f97316;
+  color: #FF6B4A;
 }
 
 .modal-footer {
@@ -367,12 +386,12 @@ small {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
-  background: #f97316;
+  background: #FF6B4A;
   color: white;
 }
 
 .btn-confirm:hover {
-  background: #ea580c;
+  background: #e85a3a;
   transform: translateY(-2px);
 }
 
