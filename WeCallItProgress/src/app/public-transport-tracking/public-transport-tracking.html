@@ -1,115 +1,74 @@
 <div class="transport-page">
   <div class="header">
-    <h2>🚍 Public Transport Tracking System</h2>
+    <h2>🚍 Public Transport Tracking - Baguio City</h2>
     <p>Real-time monitoring of buses, jeepneys, and trains | SDG 9: Sustainable Infrastructure</p>
   </div>
 
-  <!-- Stats Dashboard -->
   <div class="stats-dashboard">
-    <div class="stat-card">
-      <div class="stat-icon">🚌</div>
-      <div class="stat-info">
-        <div class="stat-value">{{ stats.totalVehicles }}</div>
-        <div class="stat-label">Total Vehicles</div>
-      </div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-icon">🟢</div>
-      <div class="stat-info">
-        <div class="stat-value">{{ stats.activeVehicles }}</div>
-        <div class="stat-label">Active</div>
-      </div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-icon">🟠</div>
-      <div class="stat-info">
-        <div class="stat-value">{{ stats.delayedVehicles }}</div>
-        <div class="stat-label">Delayed</div>
-      </div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-icon">⚡</div>
-      <div class="stat-info">
-        <div class="stat-value">{{ stats.avgSpeed }}</div>
-        <div class="stat-label">Avg Speed (km/h)</div>
-      </div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-icon">👥</div>
-      <div class="stat-info">
-        <div class="stat-value">{{ stats.avgOccupancy }}%</div>
-        <div class="stat-label">Avg Occupancy</div>
-      </div>
-    </div>
+    <div class="stat-card"><div class="stat-icon">🚌</div><div class="stat-info"><div class="stat-value">{{ stats.totalVehicles }}</div><div class="stat-label">Total Vehicles</div></div></div>
+    <div class="stat-card"><div class="stat-icon">🟢</div><div class="stat-info"><div class="stat-value">{{ stats.activeVehicles }}</div><div class="stat-label">Active</div></div></div>
+    <div class="stat-card"><div class="stat-icon">🟠</div><div class="stat-info"><div class="stat-value">{{ stats.delayedVehicles }}</div><div class="stat-label">Delayed</div></div></div>
+    <div class="stat-card"><div class="stat-icon">⚡</div><div class="stat-info"><div class="stat-value">{{ stats.avgSpeed }}</div><div class="stat-label">Avg Speed (km/h)</div></div></div>
+    <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-info"><div class="stat-value">{{ stats.avgOccupancy }}%</div><div class="stat-label">Avg Occupancy</div></div></div>
   </div>
 
-  <div class="container">
-    <!-- Map Section -->
+  <div class="content-wrapper">
     <div class="map-section">
       <div #mapContainer class="map-container"></div>
     </div>
 
-    <!-- Controls Section -->
     <div class="controls-section">
-      <!-- Filter Section -->
       <div class="card">
         <h3>🔍 Filter Vehicles</h3>
         <div class="filter-buttons">
-          <button 
-            [class.active]="selectedRoute === 'all'" 
-            (click)="filterByRoute('all')">
-            All Routes
-          </button>
-          <button 
-            *ngFor="let route of routes" 
-            [class.active]="selectedRoute === route.name"
-            (click)="filterByRoute(route.name)">
-            {{ route.name }}
-          </button>
+          <button [class.active]="selectedRoute === 'all'" (click)="filterByRoute('all')">All Routes</button>
+          <button *ngFor="let route of routes" [class.active]="selectedRoute === route.name" (click)="filterByRoute(route.name)">{{ route.name }}</button>
         </div>
       </div>
 
-      <!-- Add Vehicle Section -->
       <div class="card">
         <h3>➕ Add Vehicle</h3>
-        <select [(ngModel)]="newVehicle.type">
-          <option value="Bus">🚌 Bus</option>
-          <option value="Jeepney">🚐 Jeepney</option>
-          <option value="Train">🚆 Train</option>
-        </select>
-        <input 
-          type="text" 
-          placeholder="Route name" 
-          [(ngModel)]="newVehicle.route"
-        >
-        <input 
-          type="text" 
-          placeholder="Vehicle number" 
-          [(ngModel)]="newVehicle.vehicleNumber"
-        >
-        <input 
-          type="text" 
-          placeholder="Driver name" 
-          [(ngModel)]="newVehicle.driver"
-        >
-        <button (click)="addVehicle()">Add Vehicle</button>
+        
+        <div *ngIf="!isAddingVehicle; else addVehicleForm">
+          <button class="start-add-btn" (click)="startAddVehicle()">📍 Click to Draw Route on Map</button>
+        </div>
+        
+        <ng-template #addVehicleForm>
+          <div class="add-vehicle-instruction">
+            <p *ngIf="placementStep === 'start'">📍 Click on the map to place START point (Green)</p>
+            <p *ngIf="placementStep === 'end'">📍 Click on the map to place END point (Red)</p>
+            <p *ngIf="placementStep === 'done'">✅ Route drawn! Fill in vehicle details below</p>
+            <p *ngIf="selectedStartLat && selectedStartLng" class="pin-placed">✓ Start: {{ selectedStartLat | number:'1.4-4' }}, {{ selectedStartLng | number:'1.4-4' }}</p>
+            <p *ngIf="selectedEndLat && selectedEndLng" class="pin-placed">✓ End: {{ selectedEndLat | number:'1.4-4' }}, {{ selectedEndLng | number:'1.4-4' }}</p>
+          </div>
+          
+          <select [(ngModel)]="newVehicle.type">
+            <option value="Bus">🚌 Bus</option>
+            <option value="Jeepney">🚐 Jeepney</option>
+            <option value="Train">🚆 Train</option>
+          </select>
+          <input type="text" placeholder="Route name" [(ngModel)]="newVehicle.route">
+          <input type="text" placeholder="Vehicle Plate Number" (input)="formatPlateNumber($event, newVehicle, 'vehicleNumber')" [(ngModel)]="newVehicle.vehicleNumber">
+          <input type="text" placeholder="Driver name" [(ngModel)]="newVehicle.driver">
+          
+          <div class="add-vehicle-buttons">
+            <button class="cancel-add-btn" (click)="cancelAddVehicle()">Cancel</button>
+            <button class="submit-add-btn" (click)="addVehicle()" [disabled]="!selectedEndLat || !selectedEndLng || !newVehicle.vehicleNumber.trim() || !newVehicle.route.trim()">
+              Save Vehicle
+            </button>
+          </div>
+        </ng-template>
       </div>
 
-      <!-- Vehicles List -->
       <div class="card">
-        <h3>📋 Active Vehicles 
-          <span class="last-updated">Updated: {{ lastUpdated | date:'HH:mm:ss' }}</span>
-        </h3>
-        
+        <h3>📋 Active Vehicles <span class="last-updated">Updated: {{ lastUpdated | date:'HH:mm:ss' }}</span></h3>
         <div class="vehicles-list">
           <div *ngFor="let vehicle of vehicles" class="vehicle-item">
             <div class="vehicle-info">
               <div class="vehicle-header">
                 <span class="vehicle-icon">{{ vehicle.type === 'Bus' ? '🚌' : vehicle.type === 'Jeepney' ? '🚐' : '🚆' }}</span>
                 <strong>{{ vehicle.vehicleNumber }}</strong>
-                <span class="status-badge" [class]="vehicle.status">
-                  {{ getStatusIcon(vehicle.status) }} {{ vehicle.status }}
-                </span>
+                <span class="status-badge" [class]="vehicle.status">{{ vehicle.status }}</span>
               </div>
               <div class="vehicle-details">
                 <span>📍 {{ vehicle.route }}</span>
@@ -119,24 +78,31 @@
               </div>
               <div class="vehicle-progress">
                 <div class="progress-bar">
-                  <div class="progress-fill" [style.width.%]="vehicle.occupancy" 
-                       [style.background]="getOccupancyColor(vehicle.occupancy)">
-                  </div>
+                  <div class="progress-fill" [style.width.%]="vehicle.occupancy" [style.background]="getOccupancyColor(vehicle.occupancy)"></div>
                 </div>
               </div>
             </div>
             <button class="delete-btn" (click)="deleteVehicle(vehicle.id)">🗑️</button>
           </div>
-          
-          <div *ngIf="vehicles.length === 0 && !loading" class="empty">
-            No vehicles tracked. Add your first vehicle!
-          </div>
-          
-          <div *ngIf="loading" class="empty">
-            Loading vehicles...
-          </div>
+          <div *ngIf="vehicles.length === 0" class="empty">No vehicles tracked. Click "Add Vehicle" to create one!</div>
         </div>
       </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" *ngIf="showErrorModal" (click)="closeErrorModal()">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <span class="modal-icon">{{ errorMessageText.includes('successfully') ? '✅' : '❌' }}</span>
+      <h2>{{ errorMessageText.includes('successfully') ? 'Success' : 'Error' }}</h2>
+      <button class="modal-close" (click)="closeErrorModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <p>{{ errorMessageText }}</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-confirm" (click)="closeErrorModal()">OK</button>
     </div>
   </div>
 </div>

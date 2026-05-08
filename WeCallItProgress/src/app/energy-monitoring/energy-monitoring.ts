@@ -32,6 +32,10 @@ export class EnergyMonitoring implements OnInit, AfterViewInit {
   avgConsumption = 0;
   highestLocation = '';
 
+  showDeleteModal = false;
+  deleteItemId: number | null = null;
+  deleteItemLocation: string = '';
+
   newEnergy = {
     location: '',
     consumption: 0
@@ -66,17 +70,19 @@ export class EnergyMonitoring implements OnInit, AfterViewInit {
   }
 
   loadEnergy(): void {
-    this.http.get<EnergyData[]>(this.apiUrl)
-      .subscribe(data => {
+    this.http.get<EnergyData[]>(this.apiUrl).subscribe({
+      next: (data) => {
         this.energyData = [...data];
         this.calculateStats();
-
         if (this.viewReady) {
           this.updateChart();
         }
-
         this.cdr.detectChanges();
-      });
+      },
+      error: (err) => {
+        console.error('Error loading energy data:', err);
+      }
+    });
   }
 
   calculateStats(): void {
@@ -93,6 +99,45 @@ export class EnergyMonitoring implements OnInit, AfterViewInit {
     const highest = this.energyData.reduce((max, item) => 
       item.consumption > max.consumption ? item : max, this.energyData[0]);
     this.highestLocation = highest.location;
+  }
+
+  confirmDelete(id: number, location: string): void {
+    this.deleteItemId = id;
+    this.deleteItemLocation = location;
+    this.showDeleteModal = true;
+  }
+
+  closeDeleteModal(): void {
+    this.showDeleteModal = false;
+    this.deleteItemId = null;
+    this.deleteItemLocation = '';
+    this.cdr.detectChanges();
+  }
+
+  deleteEnergy(): void {
+    if (this.deleteItemId === null) return;
+    
+    const idToDelete = this.deleteItemId;
+    
+    this.http.delete(`${this.apiUrl}/${idToDelete}`)
+      .subscribe({
+        next: () => {
+          this.energyData = this.energyData.filter(item => item.id !== idToDelete);
+          this.calculateStats();
+          this.updateChart();
+          this.showDeleteModal = false;
+          this.deleteItemId = null;
+          this.deleteItemLocation = '';
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          console.error('Error deleting energy data:', err);
+          this.showDeleteModal = false;
+          this.deleteItemId = null;
+          this.deleteItemLocation = '';
+          this.cdr.detectChanges();
+        }
+      });
   }
 
   addEnergy(): void {
@@ -119,18 +164,6 @@ export class EnergyMonitoring implements OnInit, AfterViewInit {
 
         this.cdr.detectChanges();
       });
-  }
-
-  deleteEnergy(id: number): void {
-    if (confirm('Are you sure you want to delete this entry?')) {
-      this.http.delete(`${this.apiUrl}/${id}`)
-        .subscribe(() => {
-          this.energyData = this.energyData.filter(item => item.id !== id);
-          this.calculateStats();
-          this.updateChart();
-          this.cdr.detectChanges();
-        });
-    }
   }
 
   updateChart() {
@@ -163,9 +196,7 @@ export class EnergyMonitoring implements OnInit, AfterViewInit {
           if (elements.length > 0) {
             const index = elements[0].index;
             const selectedItem = this.energyData[index];
-            if (confirm(`Delete ${selectedItem.location}?`)) {
-              this.deleteEnergy(selectedItem.id);
-            }
+            this.confirmDelete(selectedItem.id, selectedItem.location);
           }
         },
         plugins: {

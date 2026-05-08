@@ -5,6 +5,7 @@
 .waste-dashboard {
   padding: 2rem;
   background: linear-gradient(135deg, #0b1120 0%, #111827 50%, #1e293b 100%);
+  min-height: calc(100vh + 200px);
 }
 
 .dashboard-header {

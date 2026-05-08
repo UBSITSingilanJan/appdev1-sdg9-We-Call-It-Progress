@@ -1,23 +1,12 @@
-:host {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  width: 100%;
-  overflow: hidden;
-}
-
 app-nav-bar {
-  flex-shrink: 0;
+  display: block;
 }
 
 router-outlet {
   display: none;
 }
 
-:host ::ng-deep router-outlet + * {
-  flex: 1;
+router-outlet + * {
   display: block;
-  overflow-y: auto;
-  overflow-x: hidden;
-  min-height: 0;
+  min-height: calc(100vh - 80px);
 }

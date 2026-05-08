@@ -1,1 +1,270 @@
-<p>infrastructure-reporting works!</p>
+<div class="infrastructure-dashboard">
+  <div class="dashboard-header">
+    <div class="title-section">
+      <div class="icon-badge">🏗️</div>
+      <div>
+        <h1>Infrastructure Reporting System</h1>
+        <p>Report and track infrastructure issues in your community</p>
+      </div>
+    </div>
+    <div class="header-stats">
+      <div class="stat-item">
+        <div class="stat-value">{{ stats.total }}</div>
+        <div class="stat-label">Total Reports</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">{{ stats.reported }}</div>
+        <div class="stat-label">Pending</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">{{ stats.inProgress }}</div>
+        <div class="stat-label">In Progress</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">{{ stats.resolved }}</div>
+        <div class="stat-label">Resolved</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon">📊</div>
+      <div class="stat-info">
+        <div class="stat-number">{{ stats.total }}</div>
+        <div class="stat-text">Total Issues</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">⚠️</div>
+      <div class="stat-info">
+        <div class="stat-number">{{ stats.reported }}</div>
+        <div class="stat-text">New Reports</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">🔧</div>
+      <div class="stat-info">
+        <div class="stat-number">{{ stats.inProgress }}</div>
+        <div class="stat-text">Under Repair</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">✅</div>
+      <div class="stat-info">
+        <div class="stat-number">{{ stats.resolved }}</div>
+        <div class="stat-text">Completed</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">🔥</div>
+      <div class="stat-info">
+        <div class="stat-number">{{ stats.critical }}</div>
+        <div class="stat-text">Critical Issues</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="action-bar">
+    <button class="report-btn" (click)="showAddIssue = true">
+      <span>📝</span> Report New Issue
+    </button>
+    <button class="filter-btn" (click)="showFilters = !showFilters">
+      <span>🔍</span> Filter Issues
+    </button>
+    <button class="reset-btn" (click)="resetFilters()">
+      <span>🔄</span> Reset Filters
+    </button>
+  </div>
+
+  <div class="filters-panel" *ngIf="showFilters">
+    <div class="filter-group">
+      <label>Category:</label>
+      <select [(ngModel)]="filters.category">
+        <option value="all">All Categories</option>
+        <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Severity:</label>
+      <select [(ngModel)]="filters.severity">
+        <option value="all">All Severities</option>
+        <option *ngFor="let sev of severities" [value]="sev">{{ sev }}</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Status:</label>
+      <select [(ngModel)]="filters.status">
+        <option value="all">All Statuses</option>
+        <option *ngFor="let stat of statuses" [value]="stat">{{ stat }}</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="card-section">
+    <div class="section-header">
+      <h2><span class="header-icon">📋</span> Infrastructure Issues</h2>
+    </div>
+    <div class="cards-grid">
+      <div class="issue-card" *ngFor="let issue of getFilteredIssues()">
+        <div class="card-header">
+          <div class="card-title">
+            <span class="card-icon">🏗️</span>
+            <h3>{{ issue.title }}</h3>
+          </div>
+          <div class="card-badges">
+            <span class="severity-badge" [style.background]="getSeverityColor(issue.severity)">
+              {{ issue.severity }}
+            </span>
+            <span class="status-badge" [style.background]="getStatusColor(issue.status)">
+              {{ issue.status }}
+            </span>
+          </div>
+        </div>
+        <div class="card-details">
+          <div class="detail-line">
+            <span class="label">📍 Location:</span>
+            <span class="value">{{ issue.location }}</span>
+          </div>
+          <div class="detail-line">
+            <span class="label">📂 Category:</span>
+            <span class="value">{{ issue.category }}</span>
+          </div>
+          <div class="detail-line">
+            <span class="label">📝 Description:</span>
+            <span class="value">{{ issue.description }}</span>
+          </div>
+          <div class="detail-line">
+            <span class="label">👤 Reported By:</span>
+            <span class="value">{{ issue.reportedBy }}</span>
+          </div>
+          <div class="detail-line">
+            <span class="label">📞 Contact:</span>
+            <span class="value">{{ issue.contactNumber }}</span>
+          </div>
+          <div class="detail-line">
+            <span class="label">📅 Reported:</span>
+            <span class="value">{{ issue.reportedAt | date:'medium' }}</span>
+          </div>
+        </div>
+        <div class="card-actions">
+          <button class="btn-view" (click)="viewIssue(issue)">View Details</button>
+          <button class="btn-edit" (click)="editIssue(issue)" *ngIf="issue.status !== 'Resolved' && issue.status !== 'Closed'">Edit</button>
+          <button class="btn-progress" (click)="updateIssueStatus(issue, 'In Progress')" *ngIf="issue.status === 'Reported'">Start Progress</button>
+          <button class="btn-resolve" (click)="updateIssueStatus(issue, 'Resolved')" *ngIf="issue.status === 'In Progress'">Mark Resolved</button>
+          <button class="btn-delete" (click)="confirmDelete(issue.id, issue.title)">Delete</button>
+        </div>
+      </div>
+      <div *ngIf="getFilteredIssues().length === 0" class="empty-message">
+        No infrastructure issues found. Click "Report New Issue" to create one.
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" *ngIf="selectedIssue" (click)="selectedIssue = null">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <span class="modal-icon">🏗️</span>
+      <h2>Issue Details</h2>
+      <button class="modal-close" (click)="selectedIssue = null">×</button>
+    </div>
+    <div class="modal-body">
+      <p><strong>Title:</strong> {{ selectedIssue.title }}</p>
+      <p><strong>Location:</strong> {{ selectedIssue.location }}</p>
+      <p><strong>Category:</strong> {{ selectedIssue.category }}</p>
+      <p><strong>Severity:</strong> <span [style.color]="getSeverityColor(selectedIssue.severity)">{{ selectedIssue.severity }}</span></p>
+      <p><strong>Status:</strong> <span [style.color]="getStatusColor(selectedIssue.status)">{{ selectedIssue.status }}</span></p>
+      <p><strong>Description:</strong> {{ selectedIssue.description }}</p>
+      <p><strong>Reported By:</strong> {{ selectedIssue.reportedBy }}</p>
+      <p><strong>Contact:</strong> {{ selectedIssue.contactNumber }}</p>
+      <p><strong>Reported At:</strong> {{ selectedIssue.reportedAt | date:'full' }}</p>
+      <p><strong>Last Updated:</strong> {{ selectedIssue.updatedAt | date:'full' }}</p>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" *ngIf="editingIssue" (click)="editingIssue = null">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <span class="modal-icon">✏️</span>
+      <h2>Edit Issue</h2>
+      <button class="modal-close" (click)="editingIssue = null">×</button>
+    </div>
+    <div class="modal-body">
+      <input [(ngModel)]="editingIssue.title" class="modal-input" placeholder="Title">
+      <input [(ngModel)]="editingIssue.location" class="modal-input" placeholder="Location">
+      <select [(ngModel)]="editingIssue.category" class="modal-input">
+        <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
+      </select>
+      <select [(ngModel)]="editingIssue.severity" class="modal-input">
+        <option *ngFor="let sev of severities" [value]="sev">{{ sev }}</option>
+      </select>
+      <select [(ngModel)]="editingIssue.status" class="modal-input">
+        <option *ngFor="let stat of statuses" [value]="stat">{{ stat }}</option>
+      </select>
+      <textarea [(ngModel)]="editingIssue.description" class="modal-input" placeholder="Description" rows="3"></textarea>
+      <input [(ngModel)]="editingIssue.reportedBy" class="modal-input" placeholder="Reported By">
+      <input [(ngModel)]="editingIssue.contactNumber" class="modal-input" placeholder="0000 000 0000" maxlength="13" (input)="formatContactNumber($event, editingIssue, 'contactNumber')">
+      <button class="modal-save" (click)="saveIssue()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" *ngIf="showAddIssue" (click)="showAddIssue = false">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <span class="modal-icon">📝</span>
+      <h2>Report New Issue</h2>
+      <button class="modal-close" (click)="showAddIssue = false">×</button>
+    </div>
+    <div class="modal-body">
+      <input [(ngModel)]="newIssue.title" class="modal-input" placeholder="Issue Title" required>
+      <input [(ngModel)]="newIssue.location" class="modal-input" placeholder="Location" required>
+      <select [(ngModel)]="newIssue.category" class="modal-input">
+        <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
+      </select>
+      <select [(ngModel)]="newIssue.severity" class="modal-input">
+        <option *ngFor="let sev of severities" [value]="sev">{{ sev }}</option>
+      </select>
+      <textarea [(ngModel)]="newIssue.description" class="modal-input" placeholder="Description" rows="3"></textarea>
+      <input [(ngModel)]="newIssue.reportedBy" class="modal-input" placeholder="Your Name" required>
+      <input [(ngModel)]="newIssue.contactNumber" class="modal-input" placeholder="0000 000 0000" maxlength="13" (input)="formatContactNumber($event, newIssue, 'contactNumber')">
+      <button class="modal-save" (click)="addIssue()">Submit Report</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" *ngIf="showErrorModal" (click)="closeErrorModal()">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <span class="modal-icon">{{ isSuccessMessage ? '✅' : '❌' }}</span>
+      <h2>{{ isSuccessMessage ? 'Success' : 'Error' }}</h2>
+      <button class="modal-close" (click)="closeErrorModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <p>{{ errorMessageText }}</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-confirm" (click)="closeErrorModal()">OK</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" *ngIf="showDeleteModal" (click)="closeDeleteModal()">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <span class="modal-icon">🗑️</span>
+      <h2>Delete Confirmation</h2>
+      <button class="modal-close" (click)="closeDeleteModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <p>Are you sure you want to delete <strong>{{ deleteIssueTitle }}</strong>?</p>
+      <p>This action cannot be undone.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" (click)="closeDeleteModal()">Cancel</button>
+      <button class="btn-confirm" (click)="deleteIssue()">Delete</button>
+    </div>
+  </div>
+</div>

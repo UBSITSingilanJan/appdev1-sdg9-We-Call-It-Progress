@@ -1,300 +1,377 @@
 const express = require('express');
 const cors = require('cors');
-const bodyParser = require('body-parser');
+const fs = require('fs');
+const path = require('path');
 
 const app = express();
 const PORT = 3000;
 
 app.use(cors());
-app.use(bodyParser.json());
+app.use(express.json());
 
-// Existing data stores
-let schedules = [];
-let reports = [];
-let routes = [];
+const DATA_FILE = path.join(__dirname, 'data.json');
 
-let energyData = [
-  { id: 1, location: 'Building A', consumption: 120, timestamp: new Date() },
-  { id: 2, location: 'Building B', consumption: 95, timestamp: new Date() },
-  { id: 3, location: 'Street Lights Zone 1', consumption: 60, timestamp: new Date() }
-];
+let db = {
+  schedules: [],
+  reports: [],
+  wasteRoutes: [],
+  routes: [],
+  energyData: [],
+  vehicles: [],
+  infrastructureIssues: [],
+  maintenanceTeams: []
+};
 
-// ============= PUBLIC TRANSPORT DATA =============
-let vehicles = [
-  { 
-    id: 1, 
-    type: 'Bus', 
-    route: 'EDSA Carousel', 
-    vehicleNumber: 'BUS-101',
-    status: 'active',
-    speed: 25,
-    occupancy: 65,
-    lat: 14.6033, 
-    lng: 121.0153,
-    lastUpdate: new Date(),
-    driver: 'Juan Dela Cruz',
-    nextStop: 'Ayala Station',
-    eta: '5 mins'
-  },
-  { 
-    id: 2, 
-    type: 'Bus', 
-    route: 'C5', 
-    vehicleNumber: 'BUS-102',
-    status: 'active',
-    speed: 15,
-    occupancy: 85,
-    lat: 14.5633, 
-    lng: 121.0753,
-    lastUpdate: new Date(),
-    driver: 'Maria Santos',
-    nextStop: 'Market Market',
-    eta: '8 mins'
-  },
-  { 
-    id: 3, 
-    type: 'Jeepney', 
-    route: 'Taft - Baclaran', 
-    vehicleNumber: 'JEEP-201',
-    status: 'active',
-    speed: 20,
-    occupancy: 45,
-    lat: 14.5533, 
-    lng: 120.9953,
-    lastUpdate: new Date(),
-    driver: 'Ramon Garcia',
-    nextStop: 'Taft MRT',
-    eta: '3 mins'
-  },
-  { 
-    id: 4, 
-    type: 'Train', 
-    route: 'MRT Line 3', 
-    vehicleNumber: 'TRAIN-301',
-    status: 'active',
-    speed: 40,
-    occupancy: 92,
-    lat: 14.6233, 
-    lng: 121.0453,
-    lastUpdate: new Date(),
-    driver: 'Carlos Mendoza',
-    nextStop: 'North Avenue',
-    eta: '2 mins'
-  },
-  { 
-    id: 5, 
-    type: 'Bus', 
-    route: 'Commonwealth', 
-    vehicleNumber: 'BUS-103',
-    status: 'delayed',
-    speed: 8,
-    occupancy: 70,
-    lat: 14.6533, 
-    lng: 121.0453,
-    lastUpdate: new Date(),
-    driver: 'Ana Reyes',
-    nextStop: 'Litex',
-    eta: '12 mins'
+function loadData() {
+  try {
+    if (fs.existsSync(DATA_FILE)) {
+      const raw = fs.readFileSync(DATA_FILE, 'utf8');
+      if (raw.trim() !== '') {
+        const loaded = JSON.parse(raw);
+        db.schedules = loaded.schedules || [];
+        db.reports = loaded.reports || [];
+        db.wasteRoutes = loaded.wasteRoutes || [];
+        db.routes = loaded.routes || [];
+        db.energyData = loaded.energyData || [];
+        db.vehicles = loaded.vehicles || [];
+        db.infrastructureIssues = loaded.infrastructureIssues || [];
+        db.maintenanceTeams = loaded.maintenanceTeams || [];
+        console.log('✅ Data loaded from file');
+        console.log(`📊 Schedules: ${db.schedules.length}`);
+        console.log(`📊 Reports: ${db.reports.length}`);
+        console.log(`📊 Waste Routes: ${db.wasteRoutes.length}`);
+        console.log(`📊 Traffic Routes: ${db.routes.length}`);
+      } else {
+        saveData();
+        console.log('📁 Created new data.json');
+      }
+    } else {
+      saveData();
+      console.log('📁 Created new data.json');
+    }
+  } catch (err) {
+    console.error('❌ Error loading data:', err);
+    saveData();
   }
-];
+}
 
-let routes_list = [
-  { id: 1, name: 'EDSA Carousel', type: 'Bus', stops: 25, frequency: '5 mins', status: 'operational' },
-  { id: 2, name: 'C5', type: 'Bus', stops: 18, frequency: '10 mins', status: 'operational' },
-  { id: 3, name: 'Taft - Baclaran', type: 'Jeepney', stops: 15, frequency: '8 mins', status: 'operational' },
-  { id: 4, name: 'MRT Line 3', type: 'Train', stops: 13, frequency: '4 mins', status: 'operational' },
-  { id: 5, name: 'Commonwealth', type: 'Bus', stops: 22, frequency: '12 mins', status: 'partial' }
-];
+function saveData() {
+  try {
+    const dataToSave = {
+      schedules: db.schedules,
+      reports: db.reports,
+      wasteRoutes: db.wasteRoutes,
+      routes: db.routes,
+      energyData: db.energyData,
+      vehicles: db.vehicles,
+      infrastructureIssues: db.infrastructureIssues,
+      maintenanceTeams: db.maintenanceTeams
+    };
+    fs.writeFileSync(DATA_FILE, JSON.stringify(dataToSave, null, 2));
+    console.log('💾 Data saved to file');
+  } catch (err) {
+    console.error('❌ Error saving data:', err);
+  }
+}
 
-let stops = [
-  { id: 1, name: 'Ayala Station', lat: 14.5583, lng: 121.0183, routes: ['EDSA Carousel', 'MRT Line 3'] },
-  { id: 2, name: 'Market Market', lat: 14.5483, lng: 121.0653, routes: ['C5'] },
-  { id: 3, name: 'Taft MRT', lat: 14.5433, lng: 120.9953, routes: ['Taft - Baclaran'] },
-  { id: 4, name: 'North Avenue', lat: 14.6533, lng: 121.0353, routes: ['MRT Line 3'] },
-  { id: 5, name: 'Litex', lat: 14.6683, lng: 121.0553, routes: ['Commonwealth'] },
-  { id: 6, name: 'Cubao Station', lat: 14.6203, lng: 121.0553, routes: ['MRT Line 3', 'EDSA Carousel'] },
-  { id: 7, name: 'Ortigas Station', lat: 14.5833, lng: 121.0653, routes: ['MRT Line 3'] }
-];
+function getNextId(array) {
+  if (!array || array.length === 0) return 1;
+  return Math.max(...array.map(item => item.id || 0)) + 1;
+}
 
-// ============= EXISTING ENDPOINTS =============
-app.get('/schedules', (req, res) => res.json(schedules));
+loadData();
+
+app.get('/schedules', (req, res) => {
+  res.json(db.schedules);
+});
+
 app.post('/schedules', (req, res) => {
-  const newSchedule = { id: schedules.length + 1, ...req.body };
-  schedules.push(newSchedule);
-  res.status(201).json(newSchedule);
+  const newItem = {
+    id: getNextId(db.schedules),
+    barangay: req.body.barangay,
+    collectionDay: req.body.collectionDay,
+    collectionTime: req.body.collectionTime,
+    truckNumber: req.body.truckNumber,
+    collectorName: req.body.collectorName,
+    status: req.body.status || 'Scheduled'
+  };
+  db.schedules.push(newItem);
+  saveData();
+  res.status(201).json(newItem);
 });
+
 app.put('/schedules/:id', (req, res) => {
-  const id = parseInt(req.params.id);
-  const index = schedules.findIndex(s => s.id === id);
-  if (index !== -1) {
-    schedules[index] = { ...schedules[index], ...req.body };
-    res.json(schedules[index]);
-  } else {
-    res.status(404).json({ message: 'Schedule not found' });
+  const id = Number(req.params.id);
+  const index = db.schedules.findIndex(item => item.id === id);
+  if (index === -1) {
+    return res.status(404).json({ message: 'Schedule not found' });
   }
+  db.schedules[index] = { ...db.schedules[index], ...req.body };
+  saveData();
+  res.json(db.schedules[index]);
 });
+
 app.delete('/schedules/:id', (req, res) => {
-  const id = parseInt(req.params.id);
-  schedules = schedules.filter(s => s.id !== id);
-  res.json({ message: 'Schedule deleted successfully' });
+  const id = Number(req.params.id);
+  db.schedules = db.schedules.filter(item => item.id !== id);
+  saveData();
+  res.json({ message: 'Deleted successfully' });
 });
 
-app.get('/reports', (req, res) => res.json(reports));
+app.get('/reports', (req, res) => {
+  res.json(db.reports);
+});
+
 app.post('/reports', (req, res) => {
-  const newReport = { id: reports.length + 1, ...req.body };
-  reports.push(newReport);
-  res.status(201).json(newReport);
+  const newItem = {
+    id: getNextId(db.reports),
+    residentName: req.body.residentName,
+    contactNumber: req.body.contactNumber,
+    barangay: req.body.barangay,
+    address: req.body.address,
+    reason: req.body.reason,
+    status: req.body.status || 'Pending',
+    reportedAt: new Date().toISOString()
+  };
+  db.reports.push(newItem);
+  saveData();
+  res.status(201).json(newItem);
 });
+
 app.put('/reports/:id', (req, res) => {
-  const id = parseInt(req.params.id);
-  const index = reports.findIndex(r => r.id === id);
-  if (index !== -1) {
-    reports[index] = { ...reports[index], ...req.body };
-    res.json(reports[index]);
-  } else {
-    res.status(404).json({ message: 'Report not found' });
+  const id = Number(req.params.id);
+  const index = db.reports.findIndex(item => item.id === id);
+  if (index === -1) {
+    return res.status(404).json({ message: 'Report not found' });
   }
+  db.reports[index] = { ...db.reports[index], ...req.body };
+  saveData();
+  res.json(db.reports[index]);
 });
+
 app.delete('/reports/:id', (req, res) => {
-  const id = parseInt(req.params.id);
-  reports = reports.filter(r => r.id !== id);
-  res.json({ message: 'Report deleted successfully' });
+  const id = Number(req.params.id);
+  db.reports = db.reports.filter(item => item.id !== id);
+  saveData();
+  res.json({ message: 'Deleted successfully' });
 });
 
-app.get('/routes', (req, res) => res.json(routes));
+app.get('/waste-routes', (req, res) => {
+  res.json(db.wasteRoutes);
+});
+
+app.post('/waste-routes', (req, res) => {
+  const newItem = {
+    id: getNextId(db.wasteRoutes),
+    truckNumber: req.body.truckNumber,
+    driverName: req.body.driverName,
+    assignedArea: req.body.assignedArea,
+    currentLocation: req.body.currentLocation,
+    estimatedStartTime: req.body.estimatedStartTime,
+    estimatedEndTime: req.body.estimatedEndTime,
+    status: req.body.status || 'Not Started',
+    routeStops: req.body.routeStops || []
+  };
+  db.wasteRoutes.push(newItem);
+  saveData();
+  res.status(201).json(newItem);
+});
+
+app.put('/waste-routes/:id', (req, res) => {
+  const id = Number(req.params.id);
+  const index = db.wasteRoutes.findIndex(item => item.id === id);
+  if (index === -1) {
+    return res.status(404).json({ message: 'Route not found' });
+  }
+  db.wasteRoutes[index] = { ...db.wasteRoutes[index], ...req.body };
+  saveData();
+  res.json(db.wasteRoutes[index]);
+});
+
+app.delete('/waste-routes/:id', (req, res) => {
+  const id = Number(req.params.id);
+  db.wasteRoutes = db.wasteRoutes.filter(item => item.id !== id);
+  saveData();
+  res.json({ message: 'Deleted successfully' });
+});
+
+app.get('/routes', (req, res) => {
+  console.log('GET /routes - returning', db.routes.length, 'traffic routes');
+  res.json(db.routes);
+});
+
 app.post('/routes', (req, res) => {
-  const newRoute = { id: routes.length + 1, name: req.body.name || 'Unnamed Route', status: req.body.status || 'normal', congestionLevel: req.body.congestionLevel || 0, ...req.body };
-  routes.push(newRoute);
-  res.status(201).json(newRoute);
+  console.log('POST /routes - received:', req.body);
+  
+  const newItem = {
+    id: getNextId(db.routes),
+    name: req.body.name,
+    status: req.body.status,
+    congestionLevel: req.body.congestionLevel,
+    lat: req.body.lat,
+    lng: req.body.lng
+  };
+  
+  db.routes.push(newItem);
+  saveData();
+  console.log('✅ Traffic route added, total:', db.routes.length);
+  res.status(201).json(newItem);
 });
+
 app.put('/routes/:id', (req, res) => {
-  const id = parseInt(req.params.id);
-  const index = routes.findIndex(r => r.id === id);
-  if (index !== -1) {
-    routes[index] = { ...routes[index], ...req.body };
-    res.json(routes[index]);
-  } else {
-    res.status(404).json({ message: 'Route not found' });
+  const id = Number(req.params.id);
+  const index = db.routes.findIndex(item => item.id === id);
+  if (index === -1) {
+    return res.status(404).json({ message: 'Traffic route not found' });
   }
+  db.routes[index] = { ...db.routes[index], ...req.body };
+  saveData();
+  res.json(db.routes[index]);
 });
+
 app.delete('/routes/:id', (req, res) => {
-  const id = parseInt(req.params.id);
-  routes = routes.filter(r => r.id !== id);
-  res.json({ message: 'Route deleted successfully' });
+  const id = Number(req.params.id);
+  db.routes = db.routes.filter(item => item.id !== id);
+  saveData();
+  console.log('🗑️ Traffic route deleted, remaining:', db.routes.length);
+  res.json({ message: 'Deleted successfully' });
 });
 
-app.get('/energy', (req, res) => res.json(energyData));
+app.get('/energy', (req, res) => {
+  res.json(db.energyData);
+});
+
 app.post('/energy', (req, res) => {
-  const newData = { id: energyData.length + 1, ...req.body, timestamp: new Date() };
-  energyData.push(newData);
-  res.status(201).json(newData);
+  const newItem = {
+    id: getNextId(db.energyData),
+    location: req.body.location,
+    consumption: req.body.consumption,
+    timestamp: new Date().toISOString()
+  };
+  db.energyData.push(newItem);
+  saveData();
+  res.status(201).json(newItem);
 });
-app.put('/energy/:id', (req, res) => {
-  const id = parseInt(req.params.id);
-  const index = energyData.findIndex(e => e.id === id);
-  if (index !== -1) {
-    energyData[index] = { ...energyData[index], ...req.body };
-    res.json(energyData[index]);
-  } else {
-    res.status(404).json({ message: 'Energy data not found' });
-  }
-});
+
 app.delete('/energy/:id', (req, res) => {
-  const id = parseInt(req.params.id);
-  energyData = energyData.filter(e => e.id !== id);
-  res.json({ message: 'Energy data deleted successfully' });
+  const id = Number(req.params.id);
+  db.energyData = db.energyData.filter(item => item.id !== id);
+  saveData();
+  res.json({ message: 'Deleted successfully' });
 });
 
-// ============= PUBLIC TRANSPORT ENDPOINTS =============
 app.get('/api/vehicles', (req, res) => {
-  res.json(vehicles);
-});
-
-app.get('/api/vehicles/:id', (req, res) => {
-  const id = parseInt(req.params.id);
-  const vehicle = vehicles.find(v => v.id === id);
-  if (vehicle) {
-    res.json(vehicle);
-  } else {
-    res.status(404).json({ message: 'Vehicle not found' });
-  }
+  res.json(db.vehicles);
 });
 
 app.post('/api/vehicles', (req, res) => {
-  const newVehicle = {
-    id: vehicles.length + 1,
-    ...req.body,
-    lastUpdate: new Date(),
+  const newItem = {
+    id: getNextId(db.vehicles),
+    type: req.body.type,
+    route: req.body.route,
+    vehicleNumber: req.body.vehicleNumber,
+    driver: req.body.driver,
+    status: req.body.status || 'active',
     speed: req.body.speed || 0,
-    occupancy: req.body.occupancy || 0
+    occupancy: req.body.occupancy || 0,
+    lat: req.body.lat || 14.5833,
+    lng: req.body.lng || 121.0,
+    nextStop: req.body.nextStop || 'Starting point',
+    eta: req.body.eta || '0 mins',
+    lastUpdate: new Date().toISOString()
   };
-  vehicles.push(newVehicle);
-  res.status(201).json(newVehicle);
+  db.vehicles.push(newItem);
+  saveData();
+  res.status(201).json(newItem);
 });
 
 app.put('/api/vehicles/:id', (req, res) => {
-  const id = parseInt(req.params.id);
-  const index = vehicles.findIndex(v => v.id === id);
-  if (index !== -1) {
-    vehicles[index] = { ...vehicles[index], ...req.body, lastUpdate: new Date() };
-    res.json(vehicles[index]);
-  } else {
-    res.status(404).json({ message: 'Vehicle not found' });
+  const id = Number(req.params.id);
+  const index = db.vehicles.findIndex(item => item.id === id);
+  if (index === -1) {
+    return res.status(404).json({ message: 'Vehicle not found' });
   }
+  db.vehicles[index] = { ...db.vehicles[index], ...req.body, lastUpdate: new Date().toISOString() };
+  saveData();
+  res.json(db.vehicles[index]);
 });
 
 app.delete('/api/vehicles/:id', (req, res) => {
-  const id = parseInt(req.params.id);
-  vehicles = vehicles.filter(v => v.id !== id);
-  res.json({ message: 'Vehicle deleted successfully' });
+  const id = Number(req.params.id);
+  db.vehicles = db.vehicles.filter(item => item.id !== id);
+  saveData();
+  res.json({ message: 'Deleted successfully' });
 });
 
 app.get('/api/routes', (req, res) => {
-  res.json(routes_list);
+  res.json([
+    { id: 1, name: 'EDSA Carousel', type: 'Bus', stops: 25, frequency: '5 mins', status: 'operational' },
+    { id: 2, name: 'C5', type: 'Bus', stops: 18, frequency: '10 mins', status: 'operational' }
+  ]);
 });
 
 app.get('/api/stops', (req, res) => {
-  res.json(stops);
+  res.json([
+    { id: 1, name: 'Ayala Station', lat: 14.5583, lng: 121.0183, routes: ['EDSA Carousel'] },
+    { id: 2, name: 'Market Market', lat: 14.5483, lng: 121.0653, routes: ['C5'] }
+  ]);
 });
 
-// Real-time location update endpoint
-app.post('/api/vehicles/:id/location', (req, res) => {
-  const id = parseInt(req.params.id);
-  const index = vehicles.findIndex(v => v.id === id);
-  if (index !== -1) {
-    vehicles[index].lat = req.body.lat;
-    vehicles[index].lng = req.body.lng;
-    vehicles[index].lastUpdate = new Date();
-    vehicles[index].speed = req.body.speed || vehicles[index].speed;
-    vehicles[index].occupancy = req.body.occupancy || vehicles[index].occupancy;
-    res.json(vehicles[index]);
-  } else {
-    res.status(404).json({ message: 'Vehicle not found' });
+app.get('/infrastructure-issues', (req, res) => {
+  res.json(db.infrastructureIssues);
+});
+
+app.post('/infrastructure-issues', (req, res) => {
+  const newItem = {
+    id: getNextId(db.infrastructureIssues),
+    title: req.body.title,
+    location: req.body.location,
+    category: req.body.category,
+    description: req.body.description,
+    severity: req.body.severity,
+    status: req.body.status || 'Reported',
+    reportedBy: req.body.reportedBy,
+    contactNumber: req.body.contactNumber,
+    reportedAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+  db.infrastructureIssues.push(newItem);
+  saveData();
+  res.status(201).json(newItem);
+});
+
+app.put('/infrastructure-issues/:id', (req, res) => {
+  const id = Number(req.params.id);
+  const index = db.infrastructureIssues.findIndex(item => item.id === id);
+  if (index === -1) {
+    return res.status(404).json({ message: 'Issue not found' });
   }
+  db.infrastructureIssues[index] = { ...db.infrastructureIssues[index], ...req.body, updatedAt: new Date().toISOString() };
+  saveData();
+  res.json(db.infrastructureIssues[index]);
 });
 
-// Simulate real-time movement
-setInterval(() => {
-  vehicles.forEach(vehicle => {
-    // Random movement simulation
-    const latChange = (Math.random() - 0.5) * 0.002;
-    const lngChange = (Math.random() - 0.5) * 0.002;
-    vehicle.lat += latChange;
-    vehicle.lng += lngChange;
-    vehicle.lastUpdate = new Date();
-    
-    // Random speed and occupancy changes
-    vehicle.speed = Math.max(0, Math.min(60, vehicle.speed + (Math.random() - 0.5) * 5));
-    vehicle.occupancy = Math.max(0, Math.min(100, vehicle.occupancy + (Math.random() - 0.5) * 10));
-    
-    // Random status changes
-    if (Math.random() < 0.05) {
-      const statuses = ['active', 'delayed', 'active', 'active'];
-      vehicle.status = statuses[Math.floor(Math.random() * statuses.length)];
-    }
-  });
-}, 5000); // Update every 5 seconds
+app.delete('/infrastructure-issues/:id', (req, res) => {
+  const id = Number(req.params.id);
+  db.infrastructureIssues = db.infrastructureIssues.filter(item => item.id !== id);
+  saveData();
+  res.json({ message: 'Deleted successfully' });
+});
+
+app.get('/maintenance-teams', (req, res) => {
+  res.json(db.maintenanceTeams);
+});
 
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`\n🚀 Server running at http://localhost:${PORT}`);
+  console.log(`📁 Data file: ${DATA_FILE}`);
+  console.log(`📊 Current data loaded:`);
+  console.log(`   - Schedules: ${db.schedules.length}`);
+  console.log(`   - Reports: ${db.reports.length}`);
+  console.log(`   - Waste Routes: ${db.wasteRoutes.length}`);
+  console.log(`   - Traffic Routes: ${db.routes.length}`);
+  console.log(`   - Energy: ${db.energyData.length}`);
+  console.log(`   - Vehicles: ${db.vehicles.length}`);
+  console.log(`   - Infrastructure Issues: ${db.infrastructureIssues.length}`);
+  console.log(`\n✅ Ready to accept requests\n`);
 });

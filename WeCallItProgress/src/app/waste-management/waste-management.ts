@@ -1,9 +1,9 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 
-export interface Schedule {
+export interface GarbageCollectionSchedule {
   id: number;
   barangay: string;
   collectionDay: string;
@@ -13,19 +13,18 @@ export interface Schedule {
   status: string;
 }
 
-export interface Report {
+export interface MissedPickupReport {
   id: number;
   residentName: string;
   contactNumber: string;
   barangay: string;
   address: string;
-  missedDate: string;
   reason: string;
   status: string;
   reportedAt: string;
 }
 
-export interface Route {
+export interface WasteTruckRoute {
   id: number;
   truckNumber: string;
   driverName: string;
@@ -44,28 +43,31 @@ export interface Route {
   templateUrl: './waste-management.html',
   styleUrls: ['./waste-management.css']
 })
-export class WasteManagement implements OnInit, OnDestroy {
+export class WasteManagement implements OnInit {
+
   private apiUrl = 'http://localhost:3000';
-  private refreshInterval: any;
 
-  schedules: Schedule[] = [];
-  reports: Report[] = [];
-  routes: Route[] = [];
+  schedules: GarbageCollectionSchedule[] = [];
+  missedReports: MissedPickupReport[] = [];
+  routes: WasteTruckRoute[] = [];
 
-  selectedSchedule: Schedule | null = null;
-  selectedReport: Report | null = null;
-  selectedRoute: Route | null = null;
+  selectedSchedule: GarbageCollectionSchedule | null = null;
+  selectedReport: MissedPickupReport | null = null;
+  selectedRoute: WasteTruckRoute | null = null;
 
-  editingSchedule: Schedule | null = null;
-  editingReport: Report | null = null;
-  editingRoute: Route | null = null;
+  editingSchedule: GarbageCollectionSchedule | null = null;
+  editingReport: MissedPickupReport | null = null;
+  editingRoute: WasteTruckRoute | null = null;
 
   showAddSchedule = false;
   showAddReport = false;
   showAddRoute = false;
 
-  newSchedule: Schedule = {
-    id: 0,
+  isSubmitting = false;
+  showErrorModal = false;
+  errorMessageText = '';
+
+  newSchedule = {
     barangay: '',
     collectionDay: '',
     collectionTime: '',
@@ -74,59 +76,33 @@ export class WasteManagement implements OnInit, OnDestroy {
     status: 'Scheduled'
   };
 
-  newReport: Report = {
-    id: 0,
+  newReport = {
     residentName: '',
     contactNumber: '',
     barangay: '',
     address: '',
-    missedDate: new Date().toISOString(),
     reason: '',
-    status: 'Pending',
-    reportedAt: new Date().toISOString()
+    status: 'Pending'
   };
 
-  newRoute: Route = {
-    id: 0,
+  newRoute = {
     truckNumber: '',
     driverName: '',
     assignedArea: '',
-    routeStops: [],
+    currentLocation: '',
     estimatedStartTime: '',
     estimatedEndTime: '',
-    currentLocation: '',
-    status: 'Not Started'
+    status: 'Not Started',
+    routeStops: [] as string[]
   };
 
-  loading = {
-    schedules: false,
-    reports: false,
-    routes: false
-  };
-
-  error = {
-    schedules: '',
-    reports: '',
-    routes: ''
-  };
-
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit(): void {
-  this.loadAllData();
-  this.startAutoRefresh();
-}
-
-  ngOnDestroy(): void {
-    if (this.refreshInterval) {
-      clearInterval(this.refreshInterval);
-    }
-  }
-
-  startAutoRefresh(): void {
-    this.refreshInterval = setInterval(() => {
-      this.loadAllData();
-    }, 30000);
+    this.loadAllData();
   }
 
   loadAllData(): void {
@@ -136,247 +112,588 @@ export class WasteManagement implements OnInit, OnDestroy {
   }
 
   loadSchedules(): void {
-    this.loading.schedules = true;
-    this.http.get<Schedule[]>(`${this.apiUrl}/schedules`).subscribe({
+    this.http.get<GarbageCollectionSchedule[]>(`${this.apiUrl}/schedules`).subscribe({
       next: (data) => {
-        this.schedules = data;
-        this.loading.schedules = false;
+        this.schedules = [...data];
+        this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('Error loading schedules:', err);
-        this.error.schedules = 'Failed to load schedules';
-        this.loading.schedules = false;
       }
     });
   }
 
   loadReports(): void {
-    this.loading.reports = true;
-    this.http.get<Report[]>(`${this.apiUrl}/reports`).subscribe({
+    this.http.get<MissedPickupReport[]>(`${this.apiUrl}/reports`).subscribe({
       next: (data) => {
-        this.reports = data;
-        this.loading.reports = false;
+        this.missedReports = [...data];
+        this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('Error loading reports:', err);
-        this.error.reports = 'Failed to load reports';
-        this.loading.reports = false;
       }
     });
   }
 
   loadRoutes(): void {
-    this.loading.routes = true;
-    this.http.get<Route[]>(`${this.apiUrl}/routes`).subscribe({
+    this.http.get<WasteTruckRoute[]>(`${this.apiUrl}/waste-routes`).subscribe({
       next: (data) => {
-        this.routes = data;
-        this.loading.routes = false;
+        this.routes = [...data];
+        this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('Error loading routes:', err);
-        this.error.routes = 'Failed to load routes';
-        this.loading.routes = false;
       }
     });
   }
 
+  showError(message: string): void {
+    this.errorMessageText = message;
+    this.showErrorModal = true;
+    if (message.includes('successfully')) {
+      setTimeout(() => {
+        this.closeErrorModal();
+      }, 3000);
+    }
+  }
+
+  closeErrorModal(): void {
+    this.showErrorModal = false;
+    this.errorMessageText = '';
+  }
+
+  formatDate(event: any, obj: any, field: string): void {
+    let value = event.target.value;
+    value = value.replace(/[^0-9]/g, '');
+    
+    if (value.length >= 2 && value.length < 4) {
+      value = value.slice(0, 2) + '/' + value.slice(2);
+    } else if (value.length >= 4 && value.length < 6) {
+      value = value.slice(0, 2) + '/' + value.slice(2, 4) + '/' + value.slice(4);
+    } else if (value.length >= 6) {
+      value = value.slice(0, 2) + '/' + value.slice(2, 4) + '/' + value.slice(4, 8);
+    }
+    
+    if (value.length > 10) {
+      value = value.slice(0, 10);
+    }
+    
+    obj[field] = value;
+    event.target.value = value;
+  }
+
+  formatContactNumber(event: any, obj: any, field: string): void {
+    let value = event.target.value;
+    value = value.replace(/[^0-9]/g, '');
+    
+    if (value.length >= 4 && value.length < 7) {
+      value = value.slice(0, 4) + ' ' + value.slice(4);
+    } else if (value.length >= 7 && value.length < 11) {
+      value = value.slice(0, 4) + ' ' + value.slice(4, 7) + ' ' + value.slice(7);
+    } else if (value.length >= 11) {
+      value = value.slice(0, 4) + ' ' + value.slice(4, 7) + ' ' + value.slice(7, 11);
+    }
+    
+    if (value.length > 13) {
+      value = value.slice(0, 13);
+    }
+    
+    obj[field] = value;
+    event.target.value = value;
+  }
+
+  formatPlateNumber(event: any, obj: any, field: string): void {
+    let value = event.target.value;
+    obj[field] = value;
+    event.target.value = value;
+  }
+
+  formatTimeOnlyNumbers(event: any, obj: any, field: string): void {
+    let value = event.target.value;
+    let selectionStart = event.target.selectionStart;
+    let oldLength = value.length;
+    
+    let hasAMPM = value.includes('AM') || value.includes('PM');
+    
+    let numbersOnly = value.replace(/[^0-9]/g, '');
+    
+    let timeValue = '';
+    if (numbersOnly.length >= 2 && numbersOnly.length < 4) {
+      timeValue = numbersOnly.slice(0, 2) + ':' + numbersOnly.slice(2);
+    } else if (numbersOnly.length >= 4) {
+      timeValue = numbersOnly.slice(0, 2) + ':' + numbersOnly.slice(2, 4);
+    } else {
+      timeValue = numbersOnly;
+    }
+    
+    let hasNewAMPM = value.toUpperCase().includes('A') || value.toUpperCase().includes('P');
+    
+    if (hasNewAMPM && !hasAMPM) {
+      if (value.toUpperCase().includes('A')) {
+        timeValue = timeValue + ' AM';
+      } else if (value.toUpperCase().includes('P')) {
+        timeValue = timeValue + ' PM';
+      }
+    } else if (hasAMPM && !hasNewAMPM) {
+    } else if (hasAMPM && timeValue.length > 0 && timeValue.length <= 5) {
+      if (value.includes('AM')) {
+        timeValue = timeValue + ' AM';
+      } else if (value.includes('PM')) {
+        timeValue = timeValue + ' PM';
+      }
+    }
+    
+    if (timeValue.length > 8) {
+      timeValue = timeValue.slice(0, 8);
+    }
+    
+    obj[field] = timeValue;
+    event.target.value = timeValue;
+    
+    let newLength = timeValue.length;
+    let cursorOffset = newLength - oldLength;
+    let newPosition = selectionStart + cursorOffset;
+    if (newPosition < 0) newPosition = 0;
+    if (newPosition <= timeValue.length) {
+      event.target.setSelectionRange(newPosition, newPosition);
+    }
+  }
+
+  validateDateFormat(date: string): boolean {
+    if (!date) return false;
+    const dateRegex = /^(0[1-9]|1[0-2])\/(0[1-9]|[12][0-9]|3[01])\/(19|20)\d{2}$/;
+    return dateRegex.test(date);
+  }
+
+  validateTimeFormat(time: string): boolean {
+    if (!time) return false;
+    const timeRegex = /^(0?[1-9]|1[0-2]):[0-5][0-9] (AM|PM)$/;
+    return timeRegex.test(time.trim());
+  }
+
   addSchedule(): void {
-    if (!this.newSchedule.barangay || !this.newSchedule.collectionDay) {
-      alert('Please fill in all required fields');
+    if (this.isSubmitting) return;
+    
+    if (!this.newSchedule.barangay.trim()) {
+      this.showError('Please enter barangay name');
       return;
     }
+    if (!this.newSchedule.collectionDay.trim()) {
+      this.showError('Please enter collection date');
+      return;
+    }
+    if (!this.validateDateFormat(this.newSchedule.collectionDay)) {
+      this.showError('Please enter valid date (MM/DD/YYYY)');
+      return;
+    }
+    if (!this.newSchedule.collectionTime.trim()) {
+      this.showError('Please enter collection time');
+      return;
+    }
+    if (!this.validateTimeFormat(this.newSchedule.collectionTime)) {
+      this.showError('Please enter valid time (e.g., 9:00 AM or 2:30 PM)');
+      return;
+    }
+    if (!this.newSchedule.truckNumber.trim()) {
+      this.showError('Please enter truck plate number');
+      return;
+    }
+    if (!this.newSchedule.collectorName.trim()) {
+      this.showError('Please enter collector name');
+      return;
+    }
+
+    this.isSubmitting = true;
+
     this.http.post(`${this.apiUrl}/schedules`, this.newSchedule).subscribe({
       next: () => {
         this.loadSchedules();
-        this.showAddSchedule = false;
         this.resetNewSchedule();
-        alert('Schedule added successfully');
+        this.showAddSchedule = false;
+        this.isSubmitting = false;
+        this.showError('Schedule added successfully!');
       },
       error: (err) => {
-        console.error('Error:', err);
-        alert('Failed to add schedule');
+        console.error('Error adding schedule:', err);
+        this.isSubmitting = false;
+        this.showError('Failed to add schedule');
       }
     });
   }
 
   addReport(): void {
-    if (!this.newReport.residentName || !this.newReport.barangay) {
-      alert('Please fill in all required fields');
+    if (this.isSubmitting) return;
+    
+    if (!this.newReport.residentName.trim()) {
+      this.showError('Please enter resident name');
       return;
     }
-    const reportToSend = {
+    
+    if (!this.newReport.contactNumber.trim()) {
+      this.showError('Please enter contact number');
+      return;
+    }
+    
+    const cleanContact = this.newReport.contactNumber.replace(/\s/g, '');
+    if (cleanContact.length !== 11) {
+      this.showError('Contact number must be exactly 11 digits');
+      return;
+    }
+    
+    if (!/^\d+$/.test(cleanContact)) {
+      this.showError('Contact number must contain only numbers');
+      return;
+    }
+    
+    if (!this.newReport.barangay.trim()) {
+      this.showError('Please enter barangay');
+      return;
+    }
+    
+    if (!this.newReport.address.trim()) {
+      this.showError('Please enter address');
+      return;
+    }
+    
+    if (!this.newReport.reason.trim()) {
+      this.showError('Please enter reason for missed pickup');
+      return;
+    }
+
+    this.isSubmitting = true;
+
+    const reportData = {
       ...this.newReport,
-      missedDate: new Date().toISOString(),
+      contactNumber: cleanContact,
       reportedAt: new Date().toISOString()
     };
-    this.http.post(`${this.apiUrl}/reports`, reportToSend).subscribe({
+
+    this.http.post(`${this.apiUrl}/reports`, reportData).subscribe({
       next: () => {
         this.loadReports();
-        this.showAddReport = false;
         this.resetNewReport();
-        alert('Report added successfully');
+        this.showAddReport = false;
+        this.isSubmitting = false;
+        this.showError('Report added successfully!');
       },
       error: (err) => {
-        console.error('Error:', err);
-        alert('Failed to add report');
+        console.error('Error adding report:', err);
+        this.isSubmitting = false;
+        this.showError('Failed to add report');
       }
     });
   }
 
   addRoute(): void {
-    if (!this.newRoute.truckNumber || !this.newRoute.driverName) {
-      alert('Please fill in all required fields');
+    if (this.isSubmitting) return;
+    
+    if (!this.newRoute.truckNumber.trim()) {
+      this.showError('Please enter truck plate number');
       return;
     }
-    this.http.post(`${this.apiUrl}/routes`, this.newRoute).subscribe({
+    if (!this.newRoute.driverName.trim()) {
+      this.showError('Please enter driver name');
+      return;
+    }
+    if (!this.newRoute.assignedArea.trim()) {
+      this.showError('Please enter assigned area');
+      return;
+    }
+    if (!this.newRoute.currentLocation.trim()) {
+      this.showError('Please enter current location');
+      return;
+    }
+    if (!this.newRoute.estimatedStartTime.trim()) {
+      this.showError('Please enter estimated start time');
+      return;
+    }
+    if (!this.validateTimeFormat(this.newRoute.estimatedStartTime)) {
+      this.showError('Please enter valid start time (e.g., 9:00 AM or 2:30 PM)');
+      return;
+    }
+    if (!this.newRoute.estimatedEndTime.trim()) {
+      this.showError('Please enter estimated end time');
+      return;
+    }
+    if (!this.validateTimeFormat(this.newRoute.estimatedEndTime)) {
+      this.showError('Please enter valid end time (e.g., 9:00 AM or 2:30 PM)');
+      return;
+    }
+
+    this.isSubmitting = true;
+
+    this.http.post(`${this.apiUrl}/waste-routes`, this.newRoute).subscribe({
       next: () => {
         this.loadRoutes();
-        this.showAddRoute = false;
         this.resetNewRoute();
-        alert('Route added successfully');
+        this.showAddRoute = false;
+        this.isSubmitting = false;
+        this.showError('Route added successfully!');
       },
       error: (err) => {
-        console.error('Error:', err);
-        alert('Failed to add route');
+        console.error('Error adding route:', err);
+        this.isSubmitting = false;
+        this.showError('Failed to add route');
       }
     });
   }
 
   deleteSchedule(id: number): void {
-    if (confirm('Are you sure you want to delete this schedule?')) {
-      this.http.delete(`${this.apiUrl}/schedules/${id}`).subscribe({
-        next: () => {
-          this.loadSchedules();
-          alert('Schedule deleted successfully');
-        },
-        error: (err) => {
-          console.error('Error:', err);
-          alert('Failed to delete schedule');
-        }
-      });
-    }
+    this.http.delete(`${this.apiUrl}/schedules/${id}`).subscribe({
+      next: () => {
+        this.loadSchedules();
+        this.showError('Schedule deleted successfully!');
+      },
+      error: (err) => {
+        console.error('Error deleting schedule:', err);
+        this.showError('Failed to delete schedule');
+      }
+    });
   }
 
   deleteReport(id: number): void {
-    if (confirm('Are you sure you want to delete this report?')) {
-      this.http.delete(`${this.apiUrl}/reports/${id}`).subscribe({
-        next: () => {
-          this.loadReports();
-          alert('Report deleted successfully');
-        },
-        error: (err) => {
-          console.error('Error:', err);
-          alert('Failed to delete report');
-        }
-      });
-    }
+    this.http.delete(`${this.apiUrl}/reports/${id}`).subscribe({
+      next: () => {
+        this.loadReports();
+        this.showError('Report deleted successfully!');
+      },
+      error: (err) => {
+        console.error('Error deleting report:', err);
+        this.showError('Failed to delete report');
+      }
+    });
   }
 
   deleteRoute(id: number): void {
-    if (confirm('Are you sure you want to delete this route?')) {
-      this.http.delete(`${this.apiUrl}/routes/${id}`).subscribe({
-        next: () => {
-          this.loadRoutes();
-          alert('Route deleted successfully');
-        },
-        error: (err) => {
-          console.error('Error:', err);
-          alert('Failed to delete route');
-        }
-      });
-    }
+    this.http.delete(`${this.apiUrl}/waste-routes/${id}`).subscribe({
+      next: () => {
+        this.loadRoutes();
+        this.showError('Route deleted successfully!');
+      },
+      error: (err) => {
+        console.error('Error deleting route:', err);
+        this.showError('Failed to delete route');
+      }
+    });
   }
 
-  updateScheduleStatus(schedule: Schedule, newStatus: string): void {
-    const updated = { ...schedule, status: newStatus };
+  updateScheduleStatus(schedule: GarbageCollectionSchedule, status: string): void {
+    const updated = { ...schedule, status };
     this.http.put(`${this.apiUrl}/schedules/${schedule.id}`, updated).subscribe({
-      next: () => { this.loadSchedules(); },
-      error: (err) => { console.error('Error:', err); }
+      next: () => {
+        this.loadSchedules();
+        this.showError(`Schedule marked as ${status}`);
+      },
+      error: (err) => {
+        console.error('Error updating schedule:', err);
+        this.showError('Failed to update schedule');
+      }
     });
   }
 
-  updateReportStatus(report: Report, newStatus: string): void {
-    const updated = { ...report, status: newStatus };
+  updateReportStatus(report: MissedPickupReport, status: string): void {
+    const updated = { ...report, status };
     this.http.put(`${this.apiUrl}/reports/${report.id}`, updated).subscribe({
-      next: () => { this.loadReports(); },
-      error: (err) => { console.error('Error:', err); }
+      next: () => {
+        this.loadReports();
+        this.showError(`Report marked as ${status}`);
+      },
+      error: (err) => {
+        console.error('Error updating report:', err);
+        this.showError('Failed to update report');
+      }
     });
   }
 
-  updateRouteStatus(route: Route, newStatus: string): void {
-    const updated = { ...route, status: newStatus };
-    this.http.put(`${this.apiUrl}/routes/${route.id}`, updated).subscribe({
-      next: () => { this.loadRoutes(); },
-      error: (err) => { console.error('Error:', err); }
+  updateRouteStatus(route: WasteTruckRoute, status: string): void {
+    const updated = { ...route, status };
+    this.http.put(`${this.apiUrl}/waste-routes/${route.id}`, updated).subscribe({
+      next: () => {
+        this.loadRoutes();
+        this.showError(`Route marked as ${status}`);
+      },
+      error: (err) => {
+        console.error('Error updating route:', err);
+        this.showError('Failed to update route');
+      }
     });
   }
 
-  editSchedule(schedule: Schedule): void {
+  editSchedule(schedule: GarbageCollectionSchedule): void {
     this.editingSchedule = { ...schedule };
   }
 
   saveSchedule(): void {
-    if (this.editingSchedule) {
-      this.http.put(`${this.apiUrl}/schedules/${this.editingSchedule.id}`, this.editingSchedule).subscribe({
-        next: () => {
-          this.loadSchedules();
-          this.editingSchedule = null;
-          alert('Schedule updated successfully');
-        },
-        error: (err) => { console.error('Error:', err); }
-      });
+    if (!this.editingSchedule) return;
+    
+    if (!this.editingSchedule.barangay.trim()) {
+      this.showError('Barangay cannot be empty');
+      return;
     }
+    if (!this.editingSchedule.collectionDay.trim()) {
+      this.showError('Collection date cannot be empty');
+      return;
+    }
+    if (!this.validateDateFormat(this.editingSchedule.collectionDay)) {
+      this.showError('Please enter valid date (MM/DD/YYYY)');
+      return;
+    }
+    if (!this.editingSchedule.collectionTime.trim()) {
+      this.showError('Collection time cannot be empty');
+      return;
+    }
+    if (!this.validateTimeFormat(this.editingSchedule.collectionTime)) {
+      this.showError('Please enter valid time (e.g., 9:00 AM or 2:30 PM)');
+      return;
+    }
+    if (!this.editingSchedule.truckNumber.trim()) {
+      this.showError('Truck plate number cannot be empty');
+      return;
+    }
+    if (!this.editingSchedule.collectorName.trim()) {
+      this.showError('Collector name cannot be empty');
+      return;
+    }
+    
+    this.http.put(`${this.apiUrl}/schedules/${this.editingSchedule.id}`, this.editingSchedule).subscribe({
+      next: () => {
+        this.loadSchedules();
+        this.editingSchedule = null;
+        this.showError('Schedule updated successfully!');
+      },
+      error: (err) => {
+        console.error('Error saving schedule:', err);
+        this.showError('Failed to update schedule');
+      }
+    });
   }
 
-  editReport(report: Report): void {
+  editReport(report: MissedPickupReport): void {
     this.editingReport = { ...report };
   }
 
   saveReport(): void {
-    if (this.editingReport) {
-      this.http.put(`${this.apiUrl}/reports/${this.editingReport.id}`, this.editingReport).subscribe({
-        next: () => {
-          this.loadReports();
-          this.editingReport = null;
-          alert('Report updated successfully');
-        },
-        error: (err) => { console.error('Error:', err); }
-      });
+    if (!this.editingReport) return;
+    
+    if (!this.editingReport.residentName.trim()) {
+      this.showError('Resident name cannot be empty');
+      return;
     }
+    
+    if (!this.editingReport.contactNumber.trim()) {
+      this.showError('Contact number cannot be empty');
+      return;
+    }
+    
+    const cleanContact = this.editingReport.contactNumber.replace(/\s/g, '');
+    if (cleanContact.length !== 11) {
+      this.showError('Contact number must be exactly 11 digits');
+      return;
+    }
+    
+    if (!/^\d+$/.test(cleanContact)) {
+      this.showError('Contact number must contain only numbers');
+      return;
+    }
+    
+    if (!this.editingReport.barangay.trim()) {
+      this.showError('Barangay cannot be empty');
+      return;
+    }
+    if (!this.editingReport.address.trim()) {
+      this.showError('Address cannot be empty');
+      return;
+    }
+    if (!this.editingReport.reason.trim()) {
+      this.showError('Reason cannot be empty');
+      return;
+    }
+    
+    const updatedReport = {
+      ...this.editingReport,
+      contactNumber: cleanContact
+    };
+    
+    this.http.put(`${this.apiUrl}/reports/${this.editingReport.id}`, updatedReport).subscribe({
+      next: () => {
+        this.loadReports();
+        this.editingReport = null;
+        this.showError('Report updated successfully!');
+      },
+      error: (err) => {
+        console.error('Error saving report:', err);
+        this.showError('Failed to update report');
+      }
+    });
   }
 
-  editRoute(route: Route): void {
+  editRoute(route: WasteTruckRoute): void {
     this.editingRoute = { ...route };
   }
 
   saveRoute(): void {
-    if (this.editingRoute) {
-      this.http.put(`${this.apiUrl}/routes/${this.editingRoute.id}`, this.editingRoute).subscribe({
-        next: () => {
-          this.loadRoutes();
-          this.editingRoute = null;
-          alert('Route updated successfully');
-        },
-        error: (err) => { console.error('Error:', err); }
-      });
+    if (!this.editingRoute) return;
+    
+    if (!this.editingRoute.truckNumber.trim()) {
+      this.showError('Truck plate number cannot be empty');
+      return;
     }
+    if (!this.editingRoute.driverName.trim()) {
+      this.showError('Driver name cannot be empty');
+      return;
+    }
+    if (!this.editingRoute.assignedArea.trim()) {
+      this.showError('Assigned area cannot be empty');
+      return;
+    }
+    if (!this.editingRoute.currentLocation.trim()) {
+      this.showError('Current location cannot be empty');
+      return;
+    }
+    if (!this.editingRoute.estimatedStartTime.trim()) {
+      this.showError('Estimated start time cannot be empty');
+      return;
+    }
+    if (!this.validateTimeFormat(this.editingRoute.estimatedStartTime)) {
+      this.showError('Please enter valid start time (e.g., 9:00 AM or 2:30 PM)');
+      return;
+    }
+    if (!this.editingRoute.estimatedEndTime.trim()) {
+      this.showError('Estimated end time cannot be empty');
+      return;
+    }
+    if (!this.validateTimeFormat(this.editingRoute.estimatedEndTime)) {
+      this.showError('Please enter valid end time (e.g., 9:00 AM or 2:30 PM)');
+      return;
+    }
+    
+    this.http.put(`${this.apiUrl}/waste-routes/${this.editingRoute.id}`, this.editingRoute).subscribe({
+      next: () => {
+        this.loadRoutes();
+        this.editingRoute = null;
+        this.showError('Route updated successfully!');
+      },
+      error: (err) => {
+        console.error('Error saving route:', err);
+        this.showError('Failed to update route');
+      }
+    });
   }
 
-  viewSchedule(schedule: Schedule): void {
+  viewSchedule(schedule: GarbageCollectionSchedule): void {
     this.selectedSchedule = schedule;
   }
 
-  viewReport(report: Report): void {
+  viewReport(report: MissedPickupReport): void {
     this.selectedReport = report;
   }
 
-  viewRoute(route: Route): void {
+  viewRoute(route: WasteTruckRoute): void {
     this.selectedRoute = route;
   }
 
   resetNewSchedule(): void {
     this.newSchedule = {
-      id: 0,
       barangay: '',
       collectionDay: '',
       collectionTime: '',
@@ -388,29 +705,25 @@ export class WasteManagement implements OnInit, OnDestroy {
 
   resetNewReport(): void {
     this.newReport = {
-      id: 0,
       residentName: '',
       contactNumber: '',
       barangay: '',
       address: '',
-      missedDate: new Date().toISOString(),
       reason: '',
-      status: 'Pending',
-      reportedAt: new Date().toISOString()
+      status: 'Pending'
     };
   }
 
   resetNewRoute(): void {
     this.newRoute = {
-      id: 0,
       truckNumber: '',
       driverName: '',
       assignedArea: '',
-      routeStops: [],
+      currentLocation: '',
       estimatedStartTime: '',
       estimatedEndTime: '',
-      currentLocation: '',
-      status: 'Not Started'
+      status: 'Not Started',
+      routeStops: []
     };
   }
 
@@ -427,7 +740,7 @@ export class WasteManagement implements OnInit, OnDestroy {
   }
 
   getPendingReportsCount(): number {
-    return this.reports.filter(r => r.status === 'Pending').length;
+    return this.missedReports.filter(r => r.status === 'Pending').length;
   }
 
   getCompletedSchedulesCount(): number {

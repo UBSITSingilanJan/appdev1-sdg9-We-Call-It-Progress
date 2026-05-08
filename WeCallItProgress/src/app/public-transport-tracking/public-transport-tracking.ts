@@ -4,6 +4,7 @@ import {
   AfterViewInit,
   ElementRef,
   ViewChild,
+  ChangeDetectorRef,
   OnDestroy
 } from '@angular/core';
 
@@ -22,10 +23,14 @@ interface Vehicle {
   occupancy: number;
   lat: number;
   lng: number;
-  lastUpdate: Date;
+  lastUpdate: string;
   driver: string;
   nextStop: string;
   eta: string;
+  startLat?: number;
+  startLng?: number;
+  endLat?: number;
+  endLng?: number;
 }
 
 interface TransportRoute {
@@ -53,11 +58,15 @@ interface Stop {
   styleUrls: ['./public-transport-tracking.css']
 })
 export class PublicTransportTracking implements OnInit, AfterViewInit, OnDestroy {
-  
+
   private apiUrl = 'http://localhost:3000/api';
   private map!: L.Map;
   private vehicleMarkers: Map<number, L.Marker> = new Map();
+  private routeLines: Map<number, L.Polyline> = new Map();
   private stopMarkers: L.Marker[] = [];
+  private startMarker: L.Marker | null = null;
+  private endMarker: L.Marker | null = null;
+  private tempLine: L.Polyline | null = null;
   private refreshInterval: any;
   
   vehicles: Vehicle[] = [];
@@ -68,20 +77,36 @@ export class PublicTransportTracking implements OnInit, AfterViewInit, OnDestroy
   selectedRoute: string = 'all';
   vehicleTypes = ['all', 'Bus', 'Jeepney', 'Train'];
   
+  isAddingVehicle = false;
+  isPlacingStart = false;
+  isPlacingEnd = false;
+  selectedStartLat: number | null = null;
+  selectedStartLng: number | null = null;
+  selectedEndLat: number | null = null;
+  selectedEndLng: number | null = null;
+
+  showErrorModal = false;
+  errorMessageText = '';
+
   loading = false;
-  errorMessage = '';
   lastUpdated = new Date();
   
-  newVehicle: Partial<Vehicle> = {
+  newVehicle: any = {
     type: 'Bus',
     route: '',
     vehicleNumber: '',
     driver: '',
     status: 'active',
     speed: 0,
-    occupancy: 0
+    occupancy: 0,
+    startLat: null,
+    startLng: null,
+    endLat: null,
+    endLng: null
   };
-  
+
+  placementStep: string = '';
+
   stats = {
     totalVehicles: 0,
     activeVehicles: 0,
@@ -90,10 +115,24 @@ export class PublicTransportTracking implements OnInit, AfterViewInit, OnDestroy
     avgOccupancy: 0
   };
 
+  private baguioLocations = [
+    { name: 'Session Road', lat: 16.4119, lng: 120.5956 },
+    { name: 'Burnham Park', lat: 16.4119, lng: 120.5933 },
+    { name: 'Camp John Hay', lat: 16.4017, lng: 120.5967 },
+    { name: 'Mines View Park', lat: 16.4114, lng: 120.6128 },
+    { name: 'SM City Baguio', lat: 16.4101, lng: 120.5944 },
+    { name: 'Baguio Cathedral', lat: 16.4118, lng: 120.5961 },
+    { name: 'Wright Park', lat: 16.4039, lng: 120.6083 },
+    { name: 'The Mansion', lat: 16.4056, lng: 120.6089 }
+  ];
+
   @ViewChild('mapContainer', { static: false })
   mapContainer!: ElementRef<HTMLDivElement>;
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit(): void {
     this.loadAllData();
@@ -116,16 +155,33 @@ export class PublicTransportTracking implements OnInit, AfterViewInit, OnDestroy
     if (!this.mapContainer?.nativeElement) return;
 
     this.map = L.map(this.mapContainer.nativeElement, {
-      center: [14.5833, 121.0],
-      zoom: 12
+      center: [16.4119, 120.5956],
+      zoom: 14,
+      maxBounds: L.latLngBounds(
+        L.latLng(16.35, 120.55),
+        L.latLng(16.48, 120.65)
+      ),
+      maxBoundsViscosity: 1.0
     });
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors'
+      attribution: '© OpenStreetMap contributors',
+      maxZoom: 18,
+      minZoom: 12
     }).addTo(this.map);
+
+    this.map.on('click', (e: L.LeafletMouseEvent) => {
+      if (this.isPlacingStart) {
+        this.placeStartPin(e.latlng);
+      } else if (this.isPlacingEnd) {
+        this.placeEndPin(e.latlng);
+      }
+    });
 
     setTimeout(() => {
       this.map.invalidateSize();
+      this.renderVehicles();
+      this.renderStops();
     }, 200);
     
     window.addEventListener('resize', () => {
@@ -137,9 +193,233 @@ export class PublicTransportTracking implements OnInit, AfterViewInit, OnDestroy
     });
   }
 
+  getUniqueRoutes(): string[] {
+    const routes = this.vehicles.map(v => v.route).filter(route => route && route.trim() !== '');
+    return [...new Set(routes)];
+  }
+
+  formatPlateNumber(event: any, obj: any, field: string): void {
+    let value = event.target.value;
+    obj[field] = value;
+    event.target.value = value;
+  }
+
+  startAddVehicle(): void {
+    this.isAddingVehicle = true;
+    this.isPlacingStart = true;
+    this.isPlacingEnd = false;
+    this.placementStep = 'start';
+    this.selectedStartLat = null;
+    this.selectedStartLng = null;
+    this.selectedEndLat = null;
+    this.selectedEndLng = null;
+    
+    if (this.startMarker) {
+      this.map.removeLayer(this.startMarker);
+      this.startMarker = null;
+    }
+    if (this.endMarker) {
+      this.map.removeLayer(this.endMarker);
+      this.endMarker = null;
+    }
+    if (this.tempLine) {
+      this.map.removeLayer(this.tempLine);
+      this.tempLine = null;
+    }
+    
+    this.newVehicle = {
+      type: 'Bus',
+      route: '',
+      vehicleNumber: '',
+      driver: '',
+      status: 'active',
+      speed: 0,
+      occupancy: 0,
+      startLat: null,
+      startLng: null,
+      endLat: null,
+      endLng: null
+    };
+    
+    this.map.getContainer().style.cursor = 'crosshair';
+    this.cdr.detectChanges();
+  }
+
+  placeStartPin(latlng: L.LatLng): void {
+    this.selectedStartLat = latlng.lat;
+    this.selectedStartLng = latlng.lng;
+    
+    if (this.startMarker) {
+      this.map.removeLayer(this.startMarker);
+    }
+    
+    const startIcon = L.divIcon({
+      html: '<div style="background: #22c55e; width: 16px; height: 16px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 0 2px #22c55e;"></div>',
+      iconSize: [22, 22],
+      popupAnchor: [0, -8]
+    });
+    
+    this.startMarker = L.marker([this.selectedStartLat, this.selectedStartLng], { icon: startIcon }).addTo(this.map);
+    this.startMarker.bindPopup('START Point').openPopup();
+    
+    this.isPlacingStart = false;
+    this.isPlacingEnd = true;
+    this.placementStep = 'end';
+    this.cdr.detectChanges();
+  }
+
+  placeEndPin(latlng: L.LatLng): void {
+    this.selectedEndLat = latlng.lat;
+    this.selectedEndLng = latlng.lng;
+    
+    if (this.endMarker) {
+      this.map.removeLayer(this.endMarker);
+    }
+    
+    const endIcon = L.divIcon({
+      html: '<div style="background: #ef4444; width: 16px; height: 16px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 0 2px #ef4444;"></div>',
+      iconSize: [22, 22],
+      popupAnchor: [0, -8]
+    });
+    
+    this.endMarker = L.marker([this.selectedEndLat, this.selectedEndLng], { icon: endIcon }).addTo(this.map);
+    this.endMarker.bindPopup('END Point').openPopup();
+    
+    if (this.selectedStartLat && this.selectedStartLng) {
+      const startPoint = L.latLng(this.selectedStartLat, this.selectedStartLng);
+      const endPoint = L.latLng(this.selectedEndLat, this.selectedEndLng);
+      
+      if (this.tempLine) {
+        this.map.removeLayer(this.tempLine);
+      }
+      
+      this.tempLine = L.polyline([startPoint, endPoint], {
+        color: '#3b82f6',
+        weight: 4,
+        opacity: 0.7,
+        dashArray: '10, 10'
+      }).addTo(this.map);
+    }
+    
+    this.isPlacingEnd = false;
+    this.placementStep = 'done';
+    this.cdr.detectChanges();
+  }
+
+  cancelAddVehicle(): void {
+    this.isAddingVehicle = false;
+    this.isPlacingStart = false;
+    this.isPlacingEnd = false;
+    this.placementStep = '';
+    this.selectedStartLat = null;
+    this.selectedStartLng = null;
+    this.selectedEndLat = null;
+    this.selectedEndLng = null;
+    
+    if (this.startMarker) {
+      this.map.removeLayer(this.startMarker);
+      this.startMarker = null;
+    }
+    if (this.endMarker) {
+      this.map.removeLayer(this.endMarker);
+      this.endMarker = null;
+    }
+    if (this.tempLine) {
+      this.map.removeLayer(this.tempLine);
+      this.tempLine = null;
+    }
+    
+    this.map.getContainer().style.cursor = '';
+    this.cdr.detectChanges();
+  }
+
+  addVehicle(): void {
+    if (!this.newVehicle.vehicleNumber.trim()) {
+      this.showError('Please enter a vehicle plate number');
+      return;
+    }
+    
+    if (!this.newVehicle.route.trim()) {
+      this.showError('Please enter a route name');
+      return;
+    }
+    
+    if (!this.selectedStartLat || !this.selectedStartLng) {
+      this.showError('Please place the START point on the map');
+      return;
+    }
+    
+    if (!this.selectedEndLat || !this.selectedEndLng) {
+      this.showError('Please place the END point on the map');
+      return;
+    }
+    
+    const vehicleToAdd = {
+      type: this.newVehicle.type,
+      route: this.newVehicle.route,
+      vehicleNumber: this.newVehicle.vehicleNumber,
+      driver: this.newVehicle.driver || 'TBD',
+      status: 'active',
+      speed: 0,
+      occupancy: 0,
+      lat: this.selectedStartLat,
+      lng: this.selectedStartLng,
+      startLat: this.selectedStartLat,
+      startLng: this.selectedStartLng,
+      endLat: this.selectedEndLat,
+      endLng: this.selectedEndLng,
+      nextStop: 'Starting point',
+      eta: '0 mins'
+    };
+
+    this.loading = true;
+    this.http.post<Vehicle>(`${this.apiUrl}/vehicles`, vehicleToAdd).subscribe({
+      next: () => {
+        this.loadVehicles();
+        this.loading = false;
+        this.cdr.detectChanges();
+        this.cancelAddVehicle();
+        this.showError('Vehicle added successfully!');
+      },
+      error: (error) => {
+        console.error('Error adding vehicle:', error);
+        this.loading = false;
+        this.cdr.detectChanges();
+        this.showError('Failed to add vehicle. Please check if server is running.');
+      }
+    });
+  }
+
+  deleteVehicle(id: number): void {
+    this.http.delete(`${this.apiUrl}/vehicles/${id}`).subscribe({
+      next: () => {
+        this.loadVehicles();
+        this.showError('Vehicle deleted successfully!');
+      },
+      error: (error) => {
+        console.error('Error deleting vehicle:', error);
+        this.showError('Failed to delete vehicle');
+      }
+    });
+  }
+
+  showError(message: string): void {
+    this.errorMessageText = message;
+    this.showErrorModal = true;
+    if (message.includes('successfully')) {
+      setTimeout(() => {
+        this.closeErrorModal();
+      }, 3000);
+    }
+  }
+
+  closeErrorModal(): void {
+    this.showErrorModal = false;
+    this.errorMessageText = '';
+  }
+
   loadAllData(): void {
     this.loadVehicles();
-    this.loadRoutes();
     this.loadStops();
   }
 
@@ -150,26 +430,35 @@ export class PublicTransportTracking implements OnInit, AfterViewInit, OnDestroy
         this.vehicles = data;
         this.updateStats();
         this.renderVehicles();
+        this.updateRoutesFromVehicles();
         this.loading = false;
         this.lastUpdated = new Date();
+        this.cdr.detectChanges();
       },
       error: (error) => {
         console.error('Error loading vehicles:', error);
-        this.errorMessage = 'Failed to load vehicles. Make sure server is running on port 3000';
         this.loading = false;
+        this.cdr.detectChanges();
       }
     });
   }
 
-  loadRoutes(): void {
-    this.http.get<TransportRoute[]>(`${this.apiUrl}/routes`).subscribe({
-      next: (data) => {
-        this.routes = data;
-      },
-      error: (error) => {
-        console.error('Error loading routes:', error);
-      }
-    });
+  updateRoutesFromVehicles(): void {
+    const uniqueRoutes = this.getUniqueRoutes();
+    this.routes = uniqueRoutes.map((route, index) => ({
+      id: index + 1,
+      name: route,
+      type: 'Vehicle Route',
+      stops: 0,
+      frequency: 'N/A',
+      status: 'operational'
+    }));
+    
+    if (this.selectedRoute !== 'all' && !uniqueRoutes.includes(this.selectedRoute)) {
+      this.selectedRoute = 'all';
+    }
+    
+    this.cdr.detectChanges();
   }
 
   loadStops(): void {
@@ -177,6 +466,7 @@ export class PublicTransportTracking implements OnInit, AfterViewInit, OnDestroy
       next: (data) => {
         this.stops = data;
         this.renderStops();
+        this.cdr.detectChanges();
       },
       error: (error) => {
         console.error('Error loading stops:', error);
@@ -187,13 +477,13 @@ export class PublicTransportTracking implements OnInit, AfterViewInit, OnDestroy
   startRealTimeUpdates(): void {
     this.refreshInterval = setInterval(() => {
       this.loadVehicles();
-    }, 5000); // Update every 5 seconds
+    }, 5000);
   }
 
   updateStats(): void {
     const activeVehicles = this.vehicles.filter(v => v.status === 'active');
-    const avgSpeed = this.vehicles.reduce((sum, v) => sum + v.speed, 0) / this.vehicles.length;
-    const avgOccupancy = this.vehicles.reduce((sum, v) => sum + v.occupancy, 0) / this.vehicles.length;
+    const avgSpeed = this.vehicles.reduce((sum, v) => sum + v.speed, 0) / (this.vehicles.length || 1);
+    const avgOccupancy = this.vehicles.reduce((sum, v) => sum + v.occupancy, 0) / (this.vehicles.length || 1);
     
     this.stats = {
       totalVehicles: this.vehicles.length,
@@ -211,19 +501,28 @@ export class PublicTransportTracking implements OnInit, AfterViewInit, OnDestroy
       ? this.vehicles 
       : this.vehicles.filter(v => v.route === this.selectedRoute);
     
-    // Update existing markers or create new ones
+    this.vehicleMarkers.forEach((marker, id) => {
+      if (!filteredVehicles.find(v => v.id === id)) {
+        this.map.removeLayer(marker);
+        this.vehicleMarkers.delete(id);
+      }
+    });
+    
+    this.routeLines.forEach((line, id) => {
+      if (!filteredVehicles.find(v => v.id === id)) {
+        this.map.removeLayer(line);
+        this.routeLines.delete(id);
+      }
+    });
+    
     filteredVehicles.forEach(vehicle => {
       const color = this.getVehicleColor(vehicle.type, vehicle.status);
       const icon = this.createVehicleIcon(color, vehicle.type);
       
       if (this.vehicleMarkers.has(vehicle.id)) {
-        // Update existing marker
         const marker = this.vehicleMarkers.get(vehicle.id)!;
         marker.setLatLng([vehicle.lat, vehicle.lng]);
-        marker.setIcon(icon);
-        marker.getPopup()?.setContent(this.createPopupContent(vehicle));
       } else {
-        // Create new marker
         const marker = L.marker([vehicle.lat, vehicle.lng], { icon }).addTo(this.map);
         marker.bindPopup(this.createPopupContent(vehicle));
         marker.on('click', () => {
@@ -231,13 +530,20 @@ export class PublicTransportTracking implements OnInit, AfterViewInit, OnDestroy
         });
         this.vehicleMarkers.set(vehicle.id, marker);
       }
-    });
-    
-    // Remove markers for vehicles that no longer exist in filter
-    this.vehicleMarkers.forEach((marker, id) => {
-      if (!filteredVehicles.find(v => v.id === id)) {
-        this.map.removeLayer(marker);
-        this.vehicleMarkers.delete(id);
+      
+      if (vehicle.startLat && vehicle.startLng && vehicle.endLat && vehicle.endLng) {
+        if (this.routeLines.has(vehicle.id)) {
+          const line = this.routeLines.get(vehicle.id)!;
+          line.setLatLngs([[vehicle.startLat, vehicle.startLng], [vehicle.endLat, vehicle.endLng]]);
+        } else {
+          const line = L.polyline([[vehicle.startLat, vehicle.startLng], [vehicle.endLat, vehicle.endLng]], {
+            color: '#f97316',
+            weight: 3,
+            opacity: 0.6,
+            dashArray: '5, 5'
+          }).addTo(this.map);
+          this.routeLines.set(vehicle.id, line);
+        }
       }
     });
   }
@@ -294,29 +600,13 @@ export class PublicTransportTracking implements OnInit, AfterViewInit, OnDestroy
         <h3 style="margin: 0 0 8px 0; color: #1e293b;">
           ${vehicle.type} ${vehicle.vehicleNumber}
         </h3>
-        <div style="margin-bottom: 6px;">
-          <strong>Route:</strong> ${vehicle.route}
-        </div>
-        <div style="margin-bottom: 6px;">
-          <strong>Driver:</strong> ${vehicle.driver}
-        </div>
-        <div style="margin-bottom: 6px;">
-          <strong>Status:</strong> 
-          <span style="color: ${statusColor}; font-weight: bold;">${vehicle.status.toUpperCase()}</span>
-        </div>
-        <div style="margin-bottom: 6px;">
-          <strong>Speed:</strong> ${vehicle.speed} km/h
-        </div>
-        <div style="margin-bottom: 6px;">
-          <strong>Occupancy:</strong> 
-          <span style="color: ${occupancyColor};">${vehicle.occupancy}%</span>
-        </div>
-        <div style="margin-bottom: 6px;">
-          <strong>Next Stop:</strong> ${vehicle.nextStop}
-        </div>
-        <div style="margin-bottom: 6px;">
-          <strong>ETA:</strong> ${vehicle.eta}
-        </div>
+        <div style="margin-bottom: 6px;"><strong>Route:</strong> ${vehicle.route}</div>
+        <div style="margin-bottom: 6px;"><strong>Driver:</strong> ${vehicle.driver}</div>
+        <div style="margin-bottom: 6px;"><strong>Status:</strong> <span style="color: ${statusColor}; font-weight: bold;">${vehicle.status.toUpperCase()}</span></div>
+        <div style="margin-bottom: 6px;"><strong>Speed:</strong> ${vehicle.speed} km/h</div>
+        <div style="margin-bottom: 6px;"><strong>Occupancy:</strong> <span style="color: ${occupancyColor};">${vehicle.occupancy}%</span></div>
+        <div style="margin-bottom: 6px;"><strong>Next Stop:</strong> ${vehicle.nextStop}</div>
+        <div style="margin-bottom: 6px;"><strong>ETA:</strong> ${vehicle.eta}</div>
         <hr style="margin: 8px 0;">
         <small>Last update: ${new Date(vehicle.lastUpdate).toLocaleTimeString()}</small>
       </div>
@@ -326,7 +616,6 @@ export class PublicTransportTracking implements OnInit, AfterViewInit, OnDestroy
   getVehicleColor(type: string, status: string): string {
     if (status === 'delayed') return '#f97316';
     if (status === 'inactive') return '#64748b';
-    
     switch(type) {
       case 'Bus': return '#3b82f6';
       case 'Jeepney': return '#10b981';
@@ -339,60 +628,6 @@ export class PublicTransportTracking implements OnInit, AfterViewInit, OnDestroy
     if (occupancy > 80) return '#ef4444';
     if (occupancy > 50) return '#f97316';
     return '#22c55e';
-  }
-
-  addVehicle(): void {
-    if (!this.newVehicle.route || !this.newVehicle.vehicleNumber) {
-      alert('Please enter route and vehicle number');
-      return;
-    }
-    
-    const vehicleToAdd = {
-      type: this.newVehicle.type,
-      route: this.newVehicle.route,
-      vehicleNumber: this.newVehicle.vehicleNumber,
-      driver: this.newVehicle.driver || 'TBD',
-      status: 'active',
-      speed: 0,
-      occupancy: 0,
-      lat: 14.5833 + (Math.random() * 0.1 - 0.05),
-      lng: 121.0 + (Math.random() * 0.1 - 0.05),
-      nextStop: 'Starting point',
-      eta: '0 mins'
-    };
-    
-    this.http.post<Vehicle>(`${this.apiUrl}/vehicles`, vehicleToAdd).subscribe({
-      next: () => {
-        this.loadVehicles();
-        this.newVehicle = {
-          type: 'Bus',
-          route: '',
-          vehicleNumber: '',
-          driver: '',
-          status: 'active',
-          speed: 0,
-          occupancy: 0
-        };
-      },
-      error: (error) => {
-        console.error('Error adding vehicle:', error);
-        alert('Failed to add vehicle');
-      }
-    });
-  }
-
-  deleteVehicle(id: number): void {
-    if (confirm('Are you sure you want to remove this vehicle?')) {
-      this.http.delete(`${this.apiUrl}/vehicles/${id}`).subscribe({
-        next: () => {
-          this.loadVehicles();
-        },
-        error: (error) => {
-          console.error('Error deleting vehicle:', error);
-          alert('Failed to delete vehicle');
-        }
-      });
-    }
   }
 
   filterByRoute(route: string): void {

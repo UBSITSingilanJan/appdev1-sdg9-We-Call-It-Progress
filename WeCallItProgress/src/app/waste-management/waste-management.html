@@ -1,5 +1,4 @@
 <div class="waste-dashboard">
-  <!-- Header Section -->
   <div class="dashboard-header">
     <div class="title-section">
       <div class="icon-badge">🗑️</div>
@@ -24,7 +23,6 @@
     </div>
   </div>
 
-  <!-- Stats Grid -->
   <div class="stats-grid">
     <div class="stat-card">
       <div class="stat-icon">📅</div>
@@ -56,11 +54,10 @@
     </div>
   </div>
 
-  <!-- Schedules Section -->
   <div class="card-section">
     <div class="section-header">
       <h2><span class="header-icon">🗓️</span> Garbage Collection Schedule</h2>
-      <button class="add-button" (click)="showAddSchedule = true">+ Add Schedule</button>
+      <button type="button" class="add-button" (click)="showAddSchedule = true">+ Add Schedule</button>
     </div>
     <div class="cards-grid">
       <div class="data-card" *ngFor="let schedule of schedules">
@@ -72,30 +69,29 @@
           <span class="status-badge" [class.completed]="schedule.status === 'Completed'">{{ schedule.status }}</span>
         </div>
         <div class="card-details">
-          <div class="detail-line"><span class="label">Collection Day:</span><span class="value">{{ schedule.collectionDay }}</span></div>
+          <div class="detail-line"><span class="label">Collection Date:</span><span class="value">{{ schedule.collectionDay }}</span></div>
           <div class="detail-line"><span class="label">Collection Time:</span><span class="value">{{ schedule.collectionTime }}</span></div>
-          <div class="detail-line"><span class="label">Truck Number:</span><span class="value">{{ schedule.truckNumber }}</span></div>
+          <div class="detail-line"><span class="label">Plate Number:</span><span class="value">{{ schedule.truckNumber }}</span></div>
           <div class="detail-line"><span class="label">Collector Name:</span><span class="value">{{ schedule.collectorName }}</span></div>
         </div>
         <div class="card-actions">
-          <button class="btn-view" (click)="viewSchedule(schedule)">View</button>
-          <button class="btn-complete" (click)="updateScheduleStatus(schedule, 'Completed')">Complete</button>
-          <button class="btn-edit" (click)="editSchedule(schedule)">Edit</button>
-          <button class="btn-delete" (click)="deleteSchedule(schedule.id)">Delete</button>
+          <button type="button" class="btn-view" (click)="viewSchedule(schedule)">View</button>
+          <button type="button" class="btn-complete" (click)="updateScheduleStatus(schedule, 'Completed')">Complete</button>
+          <button type="button" class="btn-edit" (click)="editSchedule(schedule)">Edit</button>
+          <button type="button" class="btn-delete" (click)="deleteSchedule(schedule.id)">Delete</button>
         </div>
       </div>
       <div *ngIf="schedules.length === 0" class="empty-message">No schedules found. Click "Add Schedule" to create one.</div>
     </div>
   </div>
 
-  <!-- Reports Section -->
   <div class="card-section">
     <div class="section-header">
       <h2><span class="header-icon">📋</span> Missed Pickup Reports</h2>
-      <button class="add-button" (click)="showAddReport = true">+ Add Report</button>
+      <button type="button" class="add-button" (click)="showAddReport = true">+ Add Report</button>
     </div>
     <div class="cards-grid">
-      <div class="data-card" *ngFor="let report of reports">
+      <div class="data-card" *ngFor="let report of missedReports">
         <div class="card-header">
           <div class="card-title">
             <span class="card-icon">📝</span>
@@ -110,21 +106,20 @@
           <div class="detail-line"><span class="label">Reason:</span><span class="value">{{ report.reason }}</span></div>
         </div>
         <div class="card-actions">
-          <button class="btn-view" (click)="viewReport(report)">View</button>
-          <button class="btn-complete" (click)="updateReportStatus(report, 'Resolved')">Resolve</button>
-          <button class="btn-edit" (click)="editReport(report)">Edit</button>
-          <button class="btn-delete" (click)="deleteReport(report.id)">Delete</button>
+          <button type="button" class="btn-view" (click)="viewReport(report)">View</button>
+          <button type="button" class="btn-complete" (click)="updateReportStatus(report, 'Resolved')">Resolve</button>
+          <button type="button" class="btn-edit" (click)="editReport(report)">Edit</button>
+          <button type="button" class="btn-delete" (click)="deleteReport(report.id)">Delete</button>
         </div>
       </div>
-      <div *ngIf="reports.length === 0" class="empty-message">No reports found. Click "Add Report" to create one.</div>
+      <div *ngIf="missedReports.length === 0" class="empty-message">No reports found. Click "Add Report" to create one.</div>
     </div>
   </div>
 
-  <!-- Routes Section -->
   <div class="card-section">
     <div class="section-header">
       <h2><span class="header-icon">🗺️</span> Route Optimization</h2>
-      <button class="add-button" (click)="showAddRoute = true">+ Add Route</button>
+      <button type="button" class="add-button" (click)="showAddRoute = true">+ Add Route</button>
     </div>
     <div class="cards-grid">
       <div class="data-card" *ngFor="let route of routes">
@@ -143,10 +138,10 @@
           <div class="detail-line"><span class="label">End Time:</span><span class="value">{{ route.estimatedEndTime }}</span></div>
         </div>
         <div class="card-actions">
-          <button class="btn-view" (click)="viewRoute(route)">View</button>
-          <button class="btn-complete" (click)="updateRouteStatus(route, 'Completed')">Complete</button>
-          <button class="btn-edit" (click)="editRoute(route)">Edit</button>
-          <button class="btn-delete" (click)="deleteRoute(route.id)">Delete</button>
+          <button type="button" class="btn-view" (click)="viewRoute(route)">View</button>
+          <button type="button" class="btn-complete" (click)="updateRouteStatus(route, 'Completed')">Complete</button>
+          <button type="button" class="btn-edit" (click)="editRoute(route)">Edit</button>
+          <button type="button" class="btn-delete" (click)="deleteRoute(route.id)">Delete</button>
         </div>
       </div>
       <div *ngIf="routes.length === 0" class="empty-message">No routes found. Click "Add Route" to create one.</div>
@@ -154,32 +149,30 @@
   </div>
 </div>
 
-<!-- View Schedule Modal -->
 <div class="modal-overlay" *ngIf="selectedSchedule" (click)="closeModals()">
   <div class="modal-content" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <span class="modal-icon">🗑️</span>
       <h2>Schedule Details</h2>
-      <button class="modal-close" (click)="closeModals()">×</button>
+      <button type="button" class="modal-close" (click)="closeModals()">×</button>
     </div>
     <div class="modal-body">
       <p><strong>Barangay:</strong> {{ selectedSchedule.barangay }}</p>
-      <p><strong>Collection Day:</strong> {{ selectedSchedule.collectionDay }}</p>
+      <p><strong>Collection Date:</strong> {{ selectedSchedule.collectionDay }}</p>
       <p><strong>Collection Time:</strong> {{ selectedSchedule.collectionTime }}</p>
-      <p><strong>Truck Number:</strong> {{ selectedSchedule.truckNumber }}</p>
+      <p><strong>Plate Number:</strong> {{ selectedSchedule.truckNumber }}</p>
       <p><strong>Collector Name:</strong> {{ selectedSchedule.collectorName }}</p>
       <p><strong>Status:</strong> {{ selectedSchedule.status }}</p>
     </div>
   </div>
 </div>
 
-<!-- View Report Modal -->
 <div class="modal-overlay" *ngIf="selectedReport" (click)="closeModals()">
   <div class="modal-content" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <span class="modal-icon">📋</span>
       <h2>Report Details</h2>
-      <button class="modal-close" (click)="closeModals()">×</button>
+      <button type="button" class="modal-close" (click)="closeModals()">×</button>
     </div>
     <div class="modal-body">
       <p><strong>Resident:</strong> {{ selectedReport.residentName }}</p>
@@ -192,16 +185,15 @@
   </div>
 </div>
 
-<!-- View Route Modal -->
 <div class="modal-overlay" *ngIf="selectedRoute" (click)="closeModals()">
   <div class="modal-content" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <span class="modal-icon">🚛</span>
       <h2>Route Details</h2>
-      <button class="modal-close" (click)="closeModals()">×</button>
+      <button type="button" class="modal-close" (click)="closeModals()">×</button>
     </div>
     <div class="modal-body">
-      <p><strong>Truck Number:</strong> {{ selectedRoute.truckNumber }}</p>
+      <p><strong>Plate Number:</strong> {{ selectedRoute.truckNumber }}</p>
       <p><strong>Driver:</strong> {{ selectedRoute.driverName }}</p>
       <p><strong>Assigned Area:</strong> {{ selectedRoute.assignedArea }}</p>
       <p><strong>Current Location:</strong> {{ selectedRoute.currentLocation }}</p>
@@ -212,118 +204,128 @@
   </div>
 </div>
 
-<!-- Edit Schedule Modal -->
 <div class="modal-overlay" *ngIf="editingSchedule" (click)="closeModals()">
   <div class="modal-content" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <span class="modal-icon">✏️</span>
       <h2>Edit Schedule</h2>
-      <button class="modal-close" (click)="closeModals()">×</button>
+      <button type="button" class="modal-close" (click)="closeModals()">×</button>
     </div>
     <div class="modal-body">
       <input [(ngModel)]="editingSchedule.barangay" class="modal-input" placeholder="Barangay">
-      <input [(ngModel)]="editingSchedule.collectionDay" class="modal-input" placeholder="Collection Day">
-      <input [(ngModel)]="editingSchedule.collectionTime" class="modal-input" placeholder="Collection Time">
-      <input [(ngModel)]="editingSchedule.truckNumber" class="modal-input" placeholder="Truck Number">
+      <input [(ngModel)]="editingSchedule.collectionDay" class="modal-input" placeholder="MM/DD/YYYY" maxlength="10" (input)="formatDate($event, editingSchedule, 'collectionDay')">
+      <input [(ngModel)]="editingSchedule.collectionTime" class="modal-input" placeholder="HH:MM AM/PM" maxlength="8" (input)="formatTimeOnlyNumbers($event, editingSchedule, 'collectionTime')">
+      <input [(ngModel)]="editingSchedule.truckNumber" class="modal-input" placeholder="Truck Plate Number" (input)="formatPlateNumber($event, editingSchedule, 'truckNumber')">
       <input [(ngModel)]="editingSchedule.collectorName" class="modal-input" placeholder="Collector Name">
-      <button class="modal-save" (click)="saveSchedule()">Save Changes</button>
+      <button type="button" class="modal-save" (click)="saveSchedule()">Save Changes</button>
     </div>
   </div>
 </div>
 
-<!-- Edit Report Modal -->
 <div class="modal-overlay" *ngIf="editingReport" (click)="closeModals()">
   <div class="modal-content" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <span class="modal-icon">✏️</span>
       <h2>Edit Report</h2>
-      <button class="modal-close" (click)="closeModals()">×</button>
+      <button type="button" class="modal-close" (click)="closeModals()">×</button>
     </div>
     <div class="modal-body">
       <input [(ngModel)]="editingReport.residentName" class="modal-input" placeholder="Resident Name">
-      <input [(ngModel)]="editingReport.contactNumber" class="modal-input" placeholder="Contact Number">
+      <input [(ngModel)]="editingReport.contactNumber" class="modal-input" placeholder="0000 000 0000" maxlength="13" (input)="formatContactNumber($event, editingReport, 'contactNumber')">
       <input [(ngModel)]="editingReport.barangay" class="modal-input" placeholder="Barangay">
       <input [(ngModel)]="editingReport.address" class="modal-input" placeholder="Address">
       <input [(ngModel)]="editingReport.reason" class="modal-input" placeholder="Reason">
-      <button class="modal-save" (click)="saveReport()">Save Changes</button>
+      <button type="button" class="modal-save" (click)="saveReport()">Save Changes</button>
     </div>
   </div>
 </div>
 
-<!-- Edit Route Modal -->
 <div class="modal-overlay" *ngIf="editingRoute" (click)="closeModals()">
   <div class="modal-content" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <span class="modal-icon">✏️</span>
       <h2>Edit Route</h2>
-      <button class="modal-close" (click)="closeModals()">×</button>
+      <button type="button" class="modal-close" (click)="closeModals()">×</button>
     </div>
     <div class="modal-body">
-      <input [(ngModel)]="editingRoute.truckNumber" class="modal-input" placeholder="Truck Number">
+      <input [(ngModel)]="editingRoute.truckNumber" class="modal-input" placeholder="Truck Plate Number" (input)="formatPlateNumber($event, editingRoute, 'truckNumber')">
       <input [(ngModel)]="editingRoute.driverName" class="modal-input" placeholder="Driver Name">
       <input [(ngModel)]="editingRoute.assignedArea" class="modal-input" placeholder="Assigned Area">
       <input [(ngModel)]="editingRoute.currentLocation" class="modal-input" placeholder="Current Location">
-      <input [(ngModel)]="editingRoute.estimatedStartTime" class="modal-input" placeholder="Start Time">
-      <input [(ngModel)]="editingRoute.estimatedEndTime" class="modal-input" placeholder="End Time">
-      <button class="modal-save" (click)="saveRoute()">Save Changes</button>
+      <input [(ngModel)]="editingRoute.estimatedStartTime" class="modal-input" placeholder="HH:MM AM/PM" maxlength="8" (input)="formatTimeOnlyNumbers($event, editingRoute, 'estimatedStartTime')">
+      <input [(ngModel)]="editingRoute.estimatedEndTime" class="modal-input" placeholder="HH:MM AM/PM" maxlength="8" (input)="formatTimeOnlyNumbers($event, editingRoute, 'estimatedEndTime')">
+      <button type="button" class="modal-save" (click)="saveRoute()">Save Changes</button>
     </div>
   </div>
 </div>
 
-<!-- Add Schedule Modal -->
 <div class="modal-overlay" *ngIf="showAddSchedule" (click)="closeModals()">
   <div class="modal-content" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <span class="modal-icon">➕</span>
       <h2>Add New Schedule</h2>
-      <button class="modal-close" (click)="closeModals()">×</button>
+      <button type="button" class="modal-close" (click)="closeModals()">×</button>
     </div>
     <div class="modal-body">
       <input [(ngModel)]="newSchedule.barangay" class="modal-input" placeholder="Barangay">
-      <input [(ngModel)]="newSchedule.collectionDay" class="modal-input" placeholder="Collection Day">
-      <input [(ngModel)]="newSchedule.collectionTime" class="modal-input" placeholder="Collection Time">
-      <input [(ngModel)]="newSchedule.truckNumber" class="modal-input" placeholder="Truck Number">
+      <input [(ngModel)]="newSchedule.collectionDay" class="modal-input" placeholder="MM/DD/YYYY" maxlength="10" (input)="formatDate($event, newSchedule, 'collectionDay')">
+      <input [(ngModel)]="newSchedule.collectionTime" class="modal-input" placeholder="HH:MM AM/PM" maxlength="8" (input)="formatTimeOnlyNumbers($event, newSchedule, 'collectionTime')">
+      <input [(ngModel)]="newSchedule.truckNumber" class="modal-input" placeholder="Truck Plate Number" (input)="formatPlateNumber($event, newSchedule, 'truckNumber')">
       <input [(ngModel)]="newSchedule.collectorName" class="modal-input" placeholder="Collector Name">
-      <button class="modal-save" (click)="addSchedule()">Add Schedule</button>
+      <button type="button" class="modal-save" (click)="addSchedule()">Add Schedule</button>
     </div>
   </div>
 </div>
 
-<!-- Add Report Modal -->
 <div class="modal-overlay" *ngIf="showAddReport" (click)="closeModals()">
   <div class="modal-content" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <span class="modal-icon">➕</span>
       <h2>Add New Report</h2>
-      <button class="modal-close" (click)="closeModals()">×</button>
+      <button type="button" class="modal-close" (click)="closeModals()">×</button>
     </div>
     <div class="modal-body">
       <input [(ngModel)]="newReport.residentName" class="modal-input" placeholder="Resident Name">
-      <input [(ngModel)]="newReport.contactNumber" class="modal-input" placeholder="Contact Number">
+      <input [(ngModel)]="newReport.contactNumber" class="modal-input" placeholder="0000 000 0000" maxlength="13" (input)="formatContactNumber($event, newReport, 'contactNumber')">
       <input [(ngModel)]="newReport.barangay" class="modal-input" placeholder="Barangay">
       <input [(ngModel)]="newReport.address" class="modal-input" placeholder="Address">
       <input [(ngModel)]="newReport.reason" class="modal-input" placeholder="Reason">
-      <button class="modal-save" (click)="addReport()">Add Report</button>
+      <button type="button" class="modal-save" (click)="addReport()">Add Report</button>
     </div>
   </div>
 </div>
 
-<!-- Add Route Modal -->
 <div class="modal-overlay" *ngIf="showAddRoute" (click)="closeModals()">
   <div class="modal-content" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <span class="modal-icon">➕</span>
       <h2>Add New Route</h2>
-      <button class="modal-close" (click)="closeModals()">×</button>
+      <button type="button" class="modal-close" (click)="closeModals()">×</button>
     </div>
     <div class="modal-body">
-      <input [(ngModel)]="newRoute.truckNumber" class="modal-input" placeholder="Truck Number">
+      <input [(ngModel)]="newRoute.truckNumber" class="modal-input" placeholder="Truck Plate Number" (input)="formatPlateNumber($event, newRoute, 'truckNumber')">
       <input [(ngModel)]="newRoute.driverName" class="modal-input" placeholder="Driver Name">
       <input [(ngModel)]="newRoute.assignedArea" class="modal-input" placeholder="Assigned Area">
       <input [(ngModel)]="newRoute.currentLocation" class="modal-input" placeholder="Current Location">
-      <input [(ngModel)]="newRoute.estimatedStartTime" class="modal-input" placeholder="Start Time">
-      <input [(ngModel)]="newRoute.estimatedEndTime" class="modal-input" placeholder="End Time">
-      <button class="modal-save" (click)="addRoute()">Add Route</button>
+      <input [(ngModel)]="newRoute.estimatedStartTime" class="modal-input" placeholder="HH:MM AM/PM" maxlength="8" (input)="formatTimeOnlyNumbers($event, newRoute, 'estimatedStartTime')">
+      <input [(ngModel)]="newRoute.estimatedEndTime" class="modal-input" placeholder="HH:MM AM/PM" maxlength="8" (input)="formatTimeOnlyNumbers($event, newRoute, 'estimatedEndTime')">
+      <button type="button" class="modal-save" (click)="addRoute()">Add Route</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" *ngIf="showErrorModal" (click)="closeErrorModal()">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <span class="modal-icon">{{ errorMessageText.includes('successfully') ? '✅' : '❌' }}</span>
+      <h2>{{ errorMessageText.includes('successfully') ? 'Success' : 'Error' }}</h2>
+      <button class="modal-close" (click)="closeErrorModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <p>{{ errorMessageText }}</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-confirm" (click)="closeErrorModal()">OK</button>
     </div>
   </div>
 </div>

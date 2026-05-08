@@ -48,7 +48,25 @@
       <h2>{{ item.location }}</h2>
       <p class="consumption">{{ item.consumption }} kWh</p>
       <p class="timestamp">{{ item.timestamp | date:'medium' }}</p>
-      <button class="delete-btn" (click)="deleteEnergy(item.id)">Delete</button>
+      <button class="delete-btn" (click)="confirmDelete(item.id, item.location)">Delete</button>
     </div>
   </div>
 </section>
+
+<div class="modal-overlay" *ngIf="showDeleteModal" (click)="closeDeleteModal()">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <span class="modal-icon">🗑️</span>
+      <h2>Delete Confirmation</h2>
+      <button class="modal-close" (click)="closeDeleteModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <p>Are you sure you want to delete <strong>{{ deleteItemLocation }}</strong>?</p>
+      <p>This action cannot be undone.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" (click)="closeDeleteModal()">Cancel</button>
+      <button class="btn-confirm" (click)="deleteEnergy()">Delete</button>
+    </div>
+  </div>
+</div>

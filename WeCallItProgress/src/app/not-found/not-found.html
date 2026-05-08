@@ -1,1 +1,30 @@
-<p>not-found works!</p>
+<div class="not-found-container">
+  <div class="not-found-content">
+    <div class="error-code">404</div>
+    <div class="error-icon">🔍</div>
+    <h1>Page Not Found</h1>
+    <p>Oops! The page you're looking for doesn't exist or has been moved.</p>
+    <div class="error-details">
+      <p>The page might have been removed, renamed, or is temporarily unavailable.</p>
+    </div>
+    <div class="button-group">
+      <button class="btn-home" (click)="goHome()">
+        🏠 Go to Home
+      </button>
+      <button class="btn-back" (click)="goBack()">
+        ⬅️ Go Back
+      </button>
+    </div>
+    <div class="suggestions">
+      <p>Try visiting:</p>
+      <div class="suggestion-links">
+        <span (click)="navigateTo('/home')">Home</span>
+        <span (click)="navigateTo('/admin-panel')">Admin Panel</span>
+        <span (click)="navigateTo('/smart-traffic-management')">Smart Traffic</span>
+        <span (click)="navigateTo('/public-transport-tracking')">Transport</span>
+        <span (click)="navigateTo('/energy-monitoring')">Energy</span>
+        <span (click)="navigateTo('/waste-management')">Waste</span>
+      </div>
+    </div>
+  </div>
+</div>
