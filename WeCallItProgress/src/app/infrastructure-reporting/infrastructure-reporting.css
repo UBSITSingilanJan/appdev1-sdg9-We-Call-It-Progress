@@ -1,7 +1,24 @@
 .infrastructure-dashboard {
   padding: 2rem;
-  background: linear-gradient(135deg, #0b1120 0%, #111827 50%, #1e293b 100%);
+  background: #0f1a2c;
   min-height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.infrastructure-dashboard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    repeating-linear-gradient(45deg, rgba(255, 107, 74, 0.05) 0px, rgba(255, 107, 74, 0.05) 2px, transparent 2px, transparent 8px),
+    repeating-linear-gradient(135deg, rgba(255, 107, 74, 0.03) 0px, rgba(255, 107, 74, 0.03) 1px, transparent 1px, transparent 6px),
+    repeating-linear-gradient(90deg, rgba(255, 107, 74, 0.04) 0px, rgba(255, 107, 74, 0.04) 1px, transparent 1px, transparent 12px),
+    repeating-linear-gradient(0deg, rgba(255, 107, 74, 0.02) 0px, rgba(255, 107, 74, 0.02) 1px, transparent 1px, transparent 10px);
+  pointer-events: none;
 }
 
 .dashboard-header {
@@ -11,6 +28,8 @@
   margin-bottom: 2rem;
   flex-wrap: wrap;
   gap: 1rem;
+  position: relative;
+  z-index: 1;
 }
 
 .title-section {
@@ -21,20 +40,20 @@
 
 .icon-badge {
   font-size: 3rem;
-  background: rgba(249, 115, 22, 0.2);
+  background: rgba(255, 107, 74, 0.15);
   width: 70px;
   height: 70px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 20px;
-  border: 2px solid #f97316;
+  border: 2px solid #FF6B4A;
 }
 
 .title-section h1 {
   font-size: 2rem;
   font-weight: 700;
-  color: #f59e0b;
+  color: #FF6B4A;
   margin: 0;
 }
 
@@ -47,7 +66,7 @@
 .header-stats {
   display: flex;
   gap: 2rem;
-  background: rgba(30, 41, 59, 0.6);
+  background: rgba(26, 42, 58, 0.6);
   padding: 0.8rem 1.5rem;
   border-radius: 60px;
 }
@@ -59,7 +78,7 @@
 .stat-value {
   font-size: 1.5rem;
   font-weight: bold;
-  color: #f97316;
+  color: #FF6B4A;
 }
 
 .stat-label {
@@ -72,22 +91,24 @@
   grid-template-columns: repeat(5, 1fr);
   gap: 1rem;
   margin-bottom: 2rem;
+  position: relative;
+  z-index: 1;
 }
 
 .stat-card {
-  background: linear-gradient(135deg, #1e293b, #0f172a);
+  background: linear-gradient(135deg, #1a2a3a, #0f1a2c);
   border-radius: 16px;
   padding: 1rem;
   display: flex;
   align-items: center;
   gap: 1rem;
-  border: 1px solid rgba(249, 115, 22, 0.2);
+  border: 1px solid rgba(255, 107, 74, 0.2);
   transition: all 0.3s ease;
 }
 
 .stat-card:hover {
   transform: translateY(-3px);
-  border-color: #f97316;
+  border-color: #FF6B4A;
 }
 
 .stat-icon {
@@ -97,7 +118,7 @@
 .stat-number {
   font-size: 1.8rem;
   font-weight: bold;
-  color: #f97316;
+  color: #FF6B4A;
 }
 
 .stat-text {
@@ -110,6 +131,8 @@
   gap: 1rem;
   margin-bottom: 2rem;
   flex-wrap: wrap;
+  position: relative;
+  z-index: 1;
 }
 
 .report-btn, .filter-btn, .reset-btn {
@@ -139,7 +162,7 @@
 }
 
 .filters-panel {
-  background: rgba(30, 41, 59, 0.8);
+  background: rgba(26, 42, 58, 0.8);
   backdrop-filter: blur(10px);
   border-radius: 20px;
   padding: 1.5rem;
@@ -147,6 +170,8 @@
   display: flex;
   gap: 2rem;
   flex-wrap: wrap;
+  position: relative;
+  z-index: 1;
 }
 
 .filter-group {
@@ -164,15 +189,17 @@
   padding: 0.5rem 1rem;
   border-radius: 8px;
   border: 1px solid #334155;
-  background: #0f172a;
+  background: #0f1a2c;
   color: white;
 }
 
 .card-section {
   margin-bottom: 2rem;
   padding: 1.5rem;
-  background: rgba(15, 23, 42, 0.65);
+  background: rgba(15, 26, 44, 0.65);
   border-radius: 24px;
+  position: relative;
+  z-index: 1;
 }
 
 .section-header {
@@ -196,16 +223,16 @@
 }
 
 .issue-card {
-  background: linear-gradient(145deg, #172033, #1f2937);
+  background: linear-gradient(145deg, #1a2a3a, #0f1a2c);
   border-radius: 20px;
   padding: 1.5rem;
-  border: 1px solid rgba(249, 115, 22, 0.2);
+  border: 1px solid rgba(255, 107, 74, 0.2);
   transition: all 0.3s ease;
 }
 
 .issue-card:hover {
   transform: translateY(-5px);
-  border-color: #f97316;
+  border-color: #FF6B4A;
 }
 
 .card-header {
@@ -301,8 +328,8 @@
 }
 
 .btn-progress {
-  background: #f59e0b;
-  color: #111827;
+  background: #FF6B4A;
+  color: white;
 }
 
 .btn-resolve {
@@ -313,46 +340,6 @@
 .btn-delete {
   background: #dc2626;
   color: white;
-}
-
-.teams-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 1.5rem;
-}
-
-.team-card {
-  background: linear-gradient(145deg, #172033, #1f2937);
-  border-radius: 20px;
-  padding: 1.5rem;
-  border: 1px solid rgba(249, 115, 22, 0.2);
-}
-
-.team-header {
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
-  margin-bottom: 1rem;
-  padding-bottom: 0.8rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.team-icon {
-  font-size: 1.8rem;
-}
-
-.team-header h3 {
-  color: #60a5fa;
-  font-size: 1.2rem;
-  margin: 0;
-}
-
-.team-details .detail-line {
-  padding: 0.5rem 0;
-}
-
-.status-value {
-  font-weight: bold;
 }
 
 .empty-message {
@@ -377,8 +364,8 @@
 }
 
 .modal-card {
-  background: linear-gradient(145deg, #1e293b, #0f172a);
-  border: 2px solid #f97316;
+  background: linear-gradient(145deg, #1a2a3a, #0f1a2c);
+  border: 2px solid #FF6B4A;
   border-radius: 24px;
   width: 90%;
   max-width: 550px;
@@ -411,7 +398,7 @@
 }
 
 .modal-header h2 {
-  color: #f97316;
+  color: #FF6B4A;
   margin: 0;
   flex: 1;
 }
@@ -428,7 +415,7 @@
 }
 
 .modal-close:hover {
-  color: #f97316;
+  color: #FF6B4A;
 }
 
 .modal-body {
@@ -450,7 +437,7 @@
   margin-top: 0.8rem;
   border-radius: 10px;
   border: 1px solid #374151;
-  background: #0f172a;
+  background: #0f1a2c;
   color: white;
   font-size: 0.9rem;
   box-sizing: border-box;
@@ -458,7 +445,7 @@
 
 .modal-input:focus {
   outline: none;
-  border-color: #f97316;
+  border-color: #FF6B4A;
 }
 
 textarea.modal-input {
@@ -470,10 +457,10 @@ textarea.modal-input {
   width: 100%;
   margin-top: 1.5rem;
   padding: 0.8rem;
-  background: linear-gradient(135deg, #f59e0b, #fbbf24);
+  background: linear-gradient(135deg, #FF6B4A, #e85a3a);
   border: none;
   border-radius: 10px;
-  color: #111827;
+  color: white;
   font-weight: bold;
   cursor: pointer;
 }
@@ -504,12 +491,12 @@ textarea.modal-input {
 }
 
 .btn-confirm {
-  background: #f97316;
+  background: #FF6B4A;
   color: white;
 }
 
 .btn-confirm:hover {
-  background: #ea580c;
+  background: #e85a3a;
   transform: translateY(-2px);
 }
 
@@ -521,9 +508,6 @@ textarea.modal-input {
     grid-template-columns: repeat(2, 1fr);
   }
   .cards-grid {
-    grid-template-columns: 1fr;
-  }
-  .teams-grid {
     grid-template-columns: 1fr;
   }
   .dashboard-header {
@@ -548,5 +532,10 @@ textarea.modal-input {
   .value {
     text-align: left;
     max-width: 100%;
+  }
+  .infrastructure-dashboard::before {
+    background-image: 
+      repeating-linear-gradient(45deg, rgba(255, 107, 74, 0.06) 0px, rgba(255, 107, 74, 0.06) 1px, transparent 1px, transparent 6px),
+      repeating-linear-gradient(135deg, rgba(255, 107, 74, 0.04) 0px, rgba(255, 107, 74, 0.04) 1px, transparent 1px, transparent 5px);
   }
 }

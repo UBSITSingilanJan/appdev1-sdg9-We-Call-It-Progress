@@ -33,16 +33,6 @@
     <canvas id="energyChart"></canvas>
   </div>
 
-  <div class="chart-data">
-    <div class="chart-row" *ngFor="let item of energyData">
-      <span class="chart-location">📍 {{ item.location }}</span>
-      <span class="chart-consumption">{{ item.consumption }} kWh</span>
-    </div>
-    <div *ngIf="energyData.length === 0" style="text-align: center; color: #64748b; padding: 20px;">
-      No energy data available. Click "Add Data" to get started.
-    </div>
-  </div>
-
   <div class="energy-grid">
     <div class="energy-card" *ngFor="let item of energyData; trackBy: trackById">
       <h2>{{ item.location }}</h2>
