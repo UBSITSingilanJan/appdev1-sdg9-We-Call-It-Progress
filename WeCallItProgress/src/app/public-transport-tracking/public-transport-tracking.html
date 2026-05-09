@@ -45,7 +45,9 @@
           <select [(ngModel)]="newVehicle.type">
             <option value="Bus">🚌 Bus</option>
             <option value="Jeepney">🚐 Jeepney</option>
-            <option value="Train">🚆 Train</option>
+            <option value="Taxi">🚕 Taxi</option>
+            <option value="Motorcycle">🏍️ Motorcycle</option>
+            <option value="Bicycle">🚲 Bicycle</option>
           </select>
           <input type="text" placeholder="Route name" [(ngModel)]="newVehicle.route">
           <input type="text" placeholder="Vehicle Plate Number" (input)="formatPlateNumber($event, newVehicle, 'vehicleNumber')" [(ngModel)]="newVehicle.vehicleNumber">
@@ -82,7 +84,7 @@
                 </div>
               </div>
             </div>
-            <button class="delete-btn" (click)="deleteVehicle(vehicle.id)">🗑️</button>
+            <button class="delete-btn" (click)="confirmDelete(vehicle.id, vehicle.vehicleNumber)">🗑️</button>
           </div>
           <div *ngIf="vehicles.length === 0" class="empty">No vehicles tracked. Click "Add Vehicle" to create one!</div>
         </div>
@@ -91,11 +93,29 @@
   </div>
 </div>
 
+<!-- Success Modal -->
+<div class="modal-overlay" *ngIf="showSuccessModal" (click)="closeSuccessModal()">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <span class="modal-icon">✅</span>
+      <h2>Success</h2>
+      <button class="modal-close" (click)="closeSuccessModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <p>{{ successMessageText }}</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-confirm" (click)="closeSuccessModal()">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- Error Modal -->
 <div class="modal-overlay" *ngIf="showErrorModal" (click)="closeErrorModal()">
   <div class="modal-card" (click)="$event.stopPropagation()">
     <div class="modal-header">
-      <span class="modal-icon">{{ errorMessageText.includes('successfully') ? '✅' : '❌' }}</span>
-      <h2>{{ errorMessageText.includes('successfully') ? 'Success' : 'Error' }}</h2>
+      <span class="modal-icon">❌</span>
+      <h2>Error</h2>
       <button class="modal-close" (click)="closeErrorModal()">×</button>
     </div>
     <div class="modal-body">
@@ -103,6 +123,25 @@
     </div>
     <div class="modal-footer">
       <button class="btn-confirm" (click)="closeErrorModal()">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal-overlay" *ngIf="showDeleteModal" (click)="closeDeleteModal()">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <span class="modal-icon">🗑️</span>
+      <h2>Delete Confirmation</h2>
+      <button class="modal-close" (click)="closeDeleteModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <p>Are you sure you want to delete <strong>{{ deleteVehicleName }}</strong>?</p>
+      <p>This action cannot be undone.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" (click)="closeDeleteModal()">Cancel</button>
+      <button class="btn-confirm" (click)="deleteVehicle()">Delete</button>
     </div>
   </div>
 </div>

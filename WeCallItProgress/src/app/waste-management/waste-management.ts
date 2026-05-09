@@ -64,6 +64,8 @@ export class WasteManagement implements OnInit {
   showAddRoute = false;
 
   isSubmitting = false;
+  showSuccessModal = false;
+  successMessageText = '';
   showErrorModal = false;
   errorMessageText = '';
 
@@ -147,14 +149,25 @@ export class WasteManagement implements OnInit {
     });
   }
 
+  showSuccess(message: string): void {
+    this.successMessageText = message;
+    this.showSuccessModal = true;
+    setTimeout(() => {
+      this.closeSuccessModal();
+    }, 3000);
+  }
+
+  closeSuccessModal(): void {
+    this.showSuccessModal = false;
+    this.successMessageText = '';
+  }
+
   showError(message: string): void {
     this.errorMessageText = message;
     this.showErrorModal = true;
-    if (message.includes('successfully')) {
-      setTimeout(() => {
-        this.closeErrorModal();
-      }, 3000);
-    }
+    setTimeout(() => {
+      this.closeErrorModal();
+    }, 3000);
   }
 
   closeErrorModal(): void {
@@ -311,7 +324,7 @@ export class WasteManagement implements OnInit {
         this.resetNewSchedule();
         this.showAddSchedule = false;
         this.isSubmitting = false;
-        this.showError('Schedule added successfully!');
+        this.showSuccess('Schedule added successfully!');
       },
       error: (err) => {
         console.error('Error adding schedule:', err);
@@ -374,7 +387,7 @@ export class WasteManagement implements OnInit {
         this.resetNewReport();
         this.showAddReport = false;
         this.isSubmitting = false;
-        this.showError('Report added successfully!');
+        this.showSuccess('Report added successfully!');
       },
       error: (err) => {
         console.error('Error adding report:', err);
@@ -428,7 +441,7 @@ export class WasteManagement implements OnInit {
         this.resetNewRoute();
         this.showAddRoute = false;
         this.isSubmitting = false;
-        this.showError('Route added successfully!');
+        this.showSuccess('Route added successfully!');
       },
       error: (err) => {
         console.error('Error adding route:', err);
@@ -442,7 +455,7 @@ export class WasteManagement implements OnInit {
     this.http.delete(`${this.apiUrl}/schedules/${id}`).subscribe({
       next: () => {
         this.loadSchedules();
-        this.showError('Schedule deleted successfully!');
+        this.showSuccess('Schedule deleted successfully!');
       },
       error: (err) => {
         console.error('Error deleting schedule:', err);
@@ -455,7 +468,7 @@ export class WasteManagement implements OnInit {
     this.http.delete(`${this.apiUrl}/reports/${id}`).subscribe({
       next: () => {
         this.loadReports();
-        this.showError('Report deleted successfully!');
+        this.showSuccess('Report deleted successfully!');
       },
       error: (err) => {
         console.error('Error deleting report:', err);
@@ -468,7 +481,7 @@ export class WasteManagement implements OnInit {
     this.http.delete(`${this.apiUrl}/waste-routes/${id}`).subscribe({
       next: () => {
         this.loadRoutes();
-        this.showError('Route deleted successfully!');
+        this.showSuccess('Route deleted successfully!');
       },
       error: (err) => {
         console.error('Error deleting route:', err);
@@ -482,7 +495,7 @@ export class WasteManagement implements OnInit {
     this.http.put(`${this.apiUrl}/schedules/${schedule.id}`, updated).subscribe({
       next: () => {
         this.loadSchedules();
-        this.showError(`Schedule marked as ${status}`);
+        this.showSuccess(`Schedule marked as ${status}`);
       },
       error: (err) => {
         console.error('Error updating schedule:', err);
@@ -496,7 +509,7 @@ export class WasteManagement implements OnInit {
     this.http.put(`${this.apiUrl}/reports/${report.id}`, updated).subscribe({
       next: () => {
         this.loadReports();
-        this.showError(`Report marked as ${status}`);
+        this.showSuccess(`Report marked as ${status}`);
       },
       error: (err) => {
         console.error('Error updating report:', err);
@@ -510,7 +523,7 @@ export class WasteManagement implements OnInit {
     this.http.put(`${this.apiUrl}/waste-routes/${route.id}`, updated).subscribe({
       next: () => {
         this.loadRoutes();
-        this.showError(`Route marked as ${status}`);
+        this.showSuccess(`Route marked as ${status}`);
       },
       error: (err) => {
         console.error('Error updating route:', err);
@@ -559,7 +572,7 @@ export class WasteManagement implements OnInit {
       next: () => {
         this.loadSchedules();
         this.editingSchedule = null;
-        this.showError('Schedule updated successfully!');
+        this.showSuccess('Schedule updated successfully!');
       },
       error: (err) => {
         console.error('Error saving schedule:', err);
@@ -618,7 +631,7 @@ export class WasteManagement implements OnInit {
       next: () => {
         this.loadReports();
         this.editingReport = null;
-        this.showError('Report updated successfully!');
+        this.showSuccess('Report updated successfully!');
       },
       error: (err) => {
         console.error('Error saving report:', err);
@@ -671,7 +684,7 @@ export class WasteManagement implements OnInit {
       next: () => {
         this.loadRoutes();
         this.editingRoute = null;
-        this.showError('Route updated successfully!');
+        this.showSuccess('Route updated successfully!');
       },
       error: (err) => {
         console.error('Error saving route:', err);

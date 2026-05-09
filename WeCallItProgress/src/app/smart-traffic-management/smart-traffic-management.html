@@ -62,7 +62,7 @@
               <small>🚗 {{ route.congestionLevel }}% congestion</small>
               <small *ngIf="route.lat && route.lng" class="coords">📍 {{ route.lat | number:'1.4-4' }}, {{ route.lng | number:'1.4-4' }}</small>
             </div>
-            <button class="delete-btn" (click)="deleteRoute(route.id)">Delete</button>
+            <button class="delete-btn" (click)="confirmDelete(route.id, route.name)">Delete</button>
           </div>
           <div *ngIf="routes.length === 0" class="empty">No routes yet. Click "Add Route" to create one!</div>
         </div>
@@ -71,11 +71,30 @@
   </div>
 </div>
 
+<!-- Success Modal -->
+<!-- Success Modal -->
+<div class="modal-overlay" *ngIf="showSuccessModal" (click)="closeSuccessModal()">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <span class="modal-icon">✅</span>
+      <h2>Success</h2>
+      <button class="modal-close" (click)="closeSuccessModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <p>{{ successMessageText }}</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-confirm" (click)="closeSuccessModal()">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- Error Modal -->
 <div class="modal-overlay" *ngIf="showErrorModal" (click)="closeErrorModal()">
   <div class="modal-card" (click)="$event.stopPropagation()">
     <div class="modal-header">
-      <span class="modal-icon">{{ errorMessageText.includes('successfully') ? '✅' : '❌' }}</span>
-      <h2>{{ errorMessageText.includes('successfully') ? 'Success' : 'Error' }}</h2>
+      <span class="modal-icon">❌</span>
+      <h2>Error</h2>
       <button class="modal-close" (click)="closeErrorModal()">×</button>
     </div>
     <div class="modal-body">
@@ -83,6 +102,25 @@
     </div>
     <div class="modal-footer">
       <button class="btn-confirm" (click)="closeErrorModal()">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal-overlay" *ngIf="showDeleteModal" (click)="closeDeleteModal()">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <span class="modal-icon">🗑️</span>
+      <h2>Delete Confirmation</h2>
+      <button class="modal-close" (click)="closeDeleteModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <p>Are you sure you want to delete <strong>{{ deleteRouteName }}</strong>?</p>
+      <p>This action cannot be undone.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" (click)="closeDeleteModal()">Cancel</button>
+      <button class="btn-confirm" (click)="deleteRoute()">Delete</button>
     </div>
   </div>
 </div>

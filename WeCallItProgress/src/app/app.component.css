@@ -10,3 +10,7 @@ router-outlet + * {
   display: block;
   min-height: calc(100vh - 80px);
 }
+
+app-footer {
+  flex-shrink: 0;
+}
