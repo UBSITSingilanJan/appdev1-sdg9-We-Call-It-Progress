@@ -1,0 +1,26 @@
+<footer class="footer">
+  <div class="footer-container">
+    <div class="footer-section">
+      <h3>🏫 University of Baguio</h3>
+      <p>College of Computer Studies</p>
+      <p class="address">Governor Pack Road, Baguio City, Philippines 2600</p>
+    </div>
+
+    <div class="footer-section">
+      <h3>👥 Development Team</h3>
+      <div class="team-members">
+        <div class="member" *ngFor="let member of teamMembers">
+          <strong>{{ member.name }}</strong>
+          <span class="role">{{ member.role }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-section">
+      <h3>📅 SDG 9 Project</h3>
+      <p>Industry, Innovation and Infrastructure</p>
+      <p>Sustainable Cities and Communities</p>
+      <p class="copyright">© {{ currentYear }} All Rights Reserved</p>
+    </div>
+  </div>
+</footer>

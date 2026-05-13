@@ -63,9 +63,11 @@ export class PublicTransportTracking implements OnInit, AfterViewInit, OnDestroy
   private map!: L.Map;
   private vehicleMarkers: Map<number, L.Marker> = new Map();
   private routeLines: Map<number, L.Polyline> = new Map();
+  private endPointMarkers: Map<number, L.CircleMarker> = new Map();
+  private startPointMarkers: Map<number, L.CircleMarker> = new Map();
   private stopMarkers: L.Marker[] = [];
-  private startMarker: L.Marker | null = null;
-  private endMarker: L.Marker | null = null;
+  private tempStartMarker: L.Marker | null = null;
+  private tempEndMarker: L.Marker | null = null;
   private tempLine: L.Polyline | null = null;
   private refreshInterval: any;
   
@@ -75,7 +77,7 @@ export class PublicTransportTracking implements OnInit, AfterViewInit, OnDestroy
   
   selectedVehicle: Vehicle | null = null;
   selectedRoute: string = 'all';
-  vehicleTypes = ['all', 'Bus', 'Jeepney', 'Train'];
+  vehicleTypes = ['all', 'Bus', 'Jeepney', 'Taxi', 'Motorcycle', 'Bicycle'];
   
   isAddingVehicle = false;
   isPlacingStart = false;
@@ -85,8 +87,16 @@ export class PublicTransportTracking implements OnInit, AfterViewInit, OnDestroy
   selectedEndLat: number | null = null;
   selectedEndLng: number | null = null;
 
+  showSuccessModal = false;
+  successMessageText = '';
   showErrorModal = false;
   errorMessageText = '';
+  showDeleteModal = false;
+  deleteVehicleId: number | null = null;
+  deleteVehicleName: string = '';
+
+  private successTimeout: any = null;
+  private errorTimeout: any = null;
 
   loading = false;
   lastUpdated = new Date();
@@ -113,6 +123,13 @@ export class PublicTransportTracking implements OnInit, AfterViewInit, OnDestroy
     delayedVehicles: 0,
     avgSpeed: 0,
     avgOccupancy: 0
+  };
+
+  private baguioBounds = {
+    north: 16.45,
+    south: 16.35,
+    east: 120.65,
+    west: 120.52
   };
 
   private baguioLocations = [
@@ -149,6 +166,12 @@ export class PublicTransportTracking implements OnInit, AfterViewInit, OnDestroy
     if (this.refreshInterval) {
       clearInterval(this.refreshInterval);
     }
+    if (this.successTimeout) {
+      clearTimeout(this.successTimeout);
+    }
+    if (this.errorTimeout) {
+      clearTimeout(this.errorTimeout);
+    }
   }
 
   initMap(): void {
@@ -156,18 +179,20 @@ export class PublicTransportTracking implements OnInit, AfterViewInit, OnDestroy
 
     this.map = L.map(this.mapContainer.nativeElement, {
       center: [16.4119, 120.5956],
-      zoom: 14,
+      zoom: 15,
+      minZoom: 14,
+      maxZoom: 18,
       maxBounds: L.latLngBounds(
-        L.latLng(16.35, 120.55),
-        L.latLng(16.48, 120.65)
+        L.latLng(this.baguioBounds.south, this.baguioBounds.west),
+        L.latLng(this.baguioBounds.north, this.baguioBounds.east)
       ),
       maxBoundsViscosity: 1.0
     });
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap contributors',
-      maxZoom: 18,
-      minZoom: 12
+      maxZoom: 19,
+      minZoom: 13
     }).addTo(this.map);
 
     this.map.on('click', (e: L.LeafletMouseEvent) => {
@@ -193,6 +218,13 @@ export class PublicTransportTracking implements OnInit, AfterViewInit, OnDestroy
     });
   }
 
+  clampToBaguio(lat: number, lng: number): { lat: number; lng: number } {
+    return {
+      lat: Math.max(this.baguioBounds.south, Math.min(this.baguioBounds.north, lat)),
+      lng: Math.max(this.baguioBounds.west, Math.min(this.baguioBounds.east, lng))
+    };
+  }
+
   getUniqueRoutes(): string[] {
     const routes = this.vehicles.map(v => v.route).filter(route => route && route.trim() !== '');
     return [...new Set(routes)];
@@ -214,13 +246,13 @@ export class PublicTransportTracking implements OnInit, AfterViewInit, OnDestroy
     this.selectedEndLat = null;
     this.selectedEndLng = null;
     
-    if (this.startMarker) {
-      this.map.removeLayer(this.startMarker);
-      this.startMarker = null;
+    if (this.tempStartMarker) {
+      this.map.removeLayer(this.tempStartMarker);
+      this.tempStartMarker = null;
     }
-    if (this.endMarker) {
-      this.map.removeLayer(this.endMarker);
-      this.endMarker = null;
+    if (this.tempEndMarker) {
+      this.map.removeLayer(this.tempEndMarker);
+      this.tempEndMarker = null;
     }
     if (this.tempLine) {
       this.map.removeLayer(this.tempLine);
@@ -246,21 +278,22 @@ export class PublicTransportTracking implements OnInit, AfterViewInit, OnDestroy
   }
 
   placeStartPin(latlng: L.LatLng): void {
-    this.selectedStartLat = latlng.lat;
-    this.selectedStartLng = latlng.lng;
+    const clamped = this.clampToBaguio(latlng.lat, latlng.lng);
+    this.selectedStartLat = clamped.lat;
+    this.selectedStartLng = clamped.lng;
     
-    if (this.startMarker) {
-      this.map.removeLayer(this.startMarker);
+    if (this.tempStartMarker) {
+      this.map.removeLayer(this.tempStartMarker);
     }
     
     const startIcon = L.divIcon({
-      html: '<div style="background: #22c55e; width: 16px; height: 16px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 0 2px #22c55e;"></div>',
-      iconSize: [22, 22],
-      popupAnchor: [0, -8]
+      html: '<div style="background: #22c55e; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 0 2px #22c55e; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold;">S</div>',
+      iconSize: [26, 26],
+      popupAnchor: [0, -13]
     });
     
-    this.startMarker = L.marker([this.selectedStartLat, this.selectedStartLng], { icon: startIcon }).addTo(this.map);
-    this.startMarker.bindPopup('START Point').openPopup();
+    this.tempStartMarker = L.marker([this.selectedStartLat, this.selectedStartLng], { icon: startIcon }).addTo(this.map);
+    this.tempStartMarker.bindPopup('<strong>START Point</strong><br>Click END to complete route').openPopup();
     
     this.isPlacingStart = false;
     this.isPlacingEnd = true;
@@ -269,21 +302,22 @@ export class PublicTransportTracking implements OnInit, AfterViewInit, OnDestroy
   }
 
   placeEndPin(latlng: L.LatLng): void {
-    this.selectedEndLat = latlng.lat;
-    this.selectedEndLng = latlng.lng;
+    const clamped = this.clampToBaguio(latlng.lat, latlng.lng);
+    this.selectedEndLat = clamped.lat;
+    this.selectedEndLng = clamped.lng;
     
-    if (this.endMarker) {
-      this.map.removeLayer(this.endMarker);
+    if (this.tempEndMarker) {
+      this.map.removeLayer(this.tempEndMarker);
     }
     
     const endIcon = L.divIcon({
-      html: '<div style="background: #ef4444; width: 16px; height: 16px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 0 2px #ef4444;"></div>',
-      iconSize: [22, 22],
-      popupAnchor: [0, -8]
+      html: '<div style="background: #ef4444; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 0 2px #ef4444; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold;">E</div>',
+      iconSize: [26, 26],
+      popupAnchor: [0, -13]
     });
     
-    this.endMarker = L.marker([this.selectedEndLat, this.selectedEndLng], { icon: endIcon }).addTo(this.map);
-    this.endMarker.bindPopup('END Point').openPopup();
+    this.tempEndMarker = L.marker([this.selectedEndLat, this.selectedEndLng], { icon: endIcon }).addTo(this.map);
+    this.tempEndMarker.bindPopup('<strong>END Point</strong>').openPopup();
     
     if (this.selectedStartLat && this.selectedStartLng) {
       const startPoint = L.latLng(this.selectedStartLat, this.selectedStartLng);
@@ -296,7 +330,7 @@ export class PublicTransportTracking implements OnInit, AfterViewInit, OnDestroy
       this.tempLine = L.polyline([startPoint, endPoint], {
         color: '#3b82f6',
         weight: 4,
-        opacity: 0.7,
+        opacity: 0.8,
         dashArray: '10, 10'
       }).addTo(this.map);
     }
@@ -316,13 +350,13 @@ export class PublicTransportTracking implements OnInit, AfterViewInit, OnDestroy
     this.selectedEndLat = null;
     this.selectedEndLng = null;
     
-    if (this.startMarker) {
-      this.map.removeLayer(this.startMarker);
-      this.startMarker = null;
+    if (this.tempStartMarker) {
+      this.map.removeLayer(this.tempStartMarker);
+      this.tempStartMarker = null;
     }
-    if (this.endMarker) {
-      this.map.removeLayer(this.endMarker);
-      this.endMarker = null;
+    if (this.tempEndMarker) {
+      this.map.removeLayer(this.tempEndMarker);
+      this.tempEndMarker = null;
     }
     if (this.tempLine) {
       this.map.removeLayer(this.tempLine);
@@ -379,7 +413,7 @@ export class PublicTransportTracking implements OnInit, AfterViewInit, OnDestroy
         this.loading = false;
         this.cdr.detectChanges();
         this.cancelAddVehicle();
-        this.showError('Vehicle added successfully!');
+        this.showSuccess('Vehicle added successfully!');
       },
       error: (error) => {
         console.error('Error adding vehicle:', error);
@@ -390,32 +424,88 @@ export class PublicTransportTracking implements OnInit, AfterViewInit, OnDestroy
     });
   }
 
-  deleteVehicle(id: number): void {
-    this.http.delete(`${this.apiUrl}/vehicles/${id}`).subscribe({
+  confirmDelete(id: number, name: string): void {
+    this.deleteVehicleId = id;
+    this.deleteVehicleName = name;
+    this.showDeleteModal = true;
+    this.cdr.detectChanges();
+  }
+
+  closeDeleteModal(): void {
+    this.showDeleteModal = false;
+    this.deleteVehicleId = null;
+    this.deleteVehicleName = '';
+    this.cdr.detectChanges();
+  }
+
+  deleteVehicle(): void {
+    if (this.deleteVehicleId === null) return;
+    
+    const idToDelete = this.deleteVehicleId;
+    const nameToDelete = this.deleteVehicleName;
+    
+    this.closeDeleteModal();
+    
+    this.http.delete(`${this.apiUrl}/vehicles/${idToDelete}`).subscribe({
       next: () => {
         this.loadVehicles();
-        this.showError('Vehicle deleted successfully!');
+        this.showSuccess(`Vehicle "${nameToDelete}" deleted successfully!`);
       },
       error: (error) => {
         console.error('Error deleting vehicle:', error);
-        this.showError('Failed to delete vehicle');
+        this.showError(`Failed to delete vehicle "${nameToDelete}"`);
       }
     });
   }
 
+  showSuccess(message: string): void {
+    if (this.successTimeout) {
+      clearTimeout(this.successTimeout);
+      this.successTimeout = null;
+    }
+    
+    this.successMessageText = message;
+    this.showSuccessModal = true;
+    this.cdr.detectChanges();
+    
+    this.successTimeout = setTimeout(() => {
+      this.closeSuccessModal();
+    }, 3000);
+  }
+
+  closeSuccessModal(): void {
+    if (this.successTimeout) {
+      clearTimeout(this.successTimeout);
+      this.successTimeout = null;
+    }
+    this.showSuccessModal = false;
+    this.successMessageText = '';
+    this.cdr.detectChanges();
+  }
+
   showError(message: string): void {
+    if (this.errorTimeout) {
+      clearTimeout(this.errorTimeout);
+      this.errorTimeout = null;
+    }
+    
     this.errorMessageText = message;
     this.showErrorModal = true;
-    if (message.includes('successfully')) {
-      setTimeout(() => {
-        this.closeErrorModal();
-      }, 3000);
-    }
+    this.cdr.detectChanges();
+    
+    this.errorTimeout = setTimeout(() => {
+      this.closeErrorModal();
+    }, 3000);
   }
 
   closeErrorModal(): void {
+    if (this.errorTimeout) {
+      clearTimeout(this.errorTimeout);
+      this.errorTimeout = null;
+    }
     this.showErrorModal = false;
     this.errorMessageText = '';
+    this.cdr.detectChanges();
   }
 
   loadAllData(): void {
@@ -515,6 +605,20 @@ export class PublicTransportTracking implements OnInit, AfterViewInit, OnDestroy
       }
     });
     
+    this.endPointMarkers.forEach((marker, id) => {
+      if (!filteredVehicles.find(v => v.id === id)) {
+        this.map.removeLayer(marker);
+        this.endPointMarkers.delete(id);
+      }
+    });
+    
+    this.startPointMarkers.forEach((marker, id) => {
+      if (!filteredVehicles.find(v => v.id === id)) {
+        this.map.removeLayer(marker);
+        this.startPointMarkers.delete(id);
+      }
+    });
+    
     filteredVehicles.forEach(vehicle => {
       const color = this.getVehicleColor(vehicle.type, vehicle.status);
       const icon = this.createVehicleIcon(color, vehicle.type);
@@ -531,17 +635,47 @@ export class PublicTransportTracking implements OnInit, AfterViewInit, OnDestroy
         this.vehicleMarkers.set(vehicle.id, marker);
       }
       
+      if (vehicle.startLat && vehicle.startLng) {
+        const startIcon = L.circleMarker([vehicle.startLat, vehicle.startLng], {
+          radius: 6,
+          fillColor: '#22c55e',
+          color: 'white',
+          weight: 2,
+          opacity: 1,
+          fillOpacity: 0.9
+        }).addTo(this.map);
+        startIcon.bindPopup(`<strong>START</strong><br>Route: ${vehicle.route}<br>Vehicle: ${vehicle.vehicleNumber}`);
+        this.startPointMarkers.set(vehicle.id, startIcon);
+      }
+      
+      if (vehicle.endLat && vehicle.endLng) {
+        const endIcon = L.circleMarker([vehicle.endLat, vehicle.endLng], {
+          radius: 6,
+          fillColor: '#ef4444',
+          color: 'white',
+          weight: 2,
+          opacity: 1,
+          fillOpacity: 0.9
+        }).addTo(this.map);
+        endIcon.bindPopup(`<strong>END POINT</strong><br>Route: ${vehicle.route}<br>Vehicle: ${vehicle.vehicleNumber}<br>Destination reached when vehicle arrives here`);
+        this.endPointMarkers.set(vehicle.id, endIcon);
+      }
+      
       if (vehicle.startLat && vehicle.startLng && vehicle.endLat && vehicle.endLng) {
+        const isSelectedRoute = this.selectedRoute === vehicle.route || this.selectedRoute === 'all';
+        const lineStyle = {
+          color: '#FF6B4A',
+          weight: 3,
+          opacity: 0.8,
+          dashArray: isSelectedRoute ? undefined : '8, 8'
+        };
+        
         if (this.routeLines.has(vehicle.id)) {
           const line = this.routeLines.get(vehicle.id)!;
           line.setLatLngs([[vehicle.startLat, vehicle.startLng], [vehicle.endLat, vehicle.endLng]]);
+          line.setStyle(lineStyle);
         } else {
-          const line = L.polyline([[vehicle.startLat, vehicle.startLng], [vehicle.endLat, vehicle.endLng]], {
-            color: '#f97316',
-            weight: 3,
-            opacity: 0.6,
-            dashArray: '5, 5'
-          }).addTo(this.map);
+          const line = L.polyline([[vehicle.startLat, vehicle.startLng], [vehicle.endLat, vehicle.endLng]], lineStyle).addTo(this.map);
           this.routeLines.set(vehicle.id, line);
         }
       }
@@ -578,7 +712,9 @@ export class PublicTransportTracking implements OnInit, AfterViewInit, OnDestroy
     const icons: { [key: string]: string } = {
       'Bus': '🚌',
       'Jeepney': '🚐',
-      'Train': '🚆'
+      'Taxi': '🚕',
+      'Motorcycle': '🏍️',
+      'Bicycle': '🚲'
     };
     
     return L.divIcon({
@@ -592,11 +728,11 @@ export class PublicTransportTracking implements OnInit, AfterViewInit, OnDestroy
   }
 
   createPopupContent(vehicle: Vehicle): string {
-    const statusColor = vehicle.status === 'active' ? '#22c55e' : '#f97316';
+    const statusColor = vehicle.status === 'active' ? '#22c55e' : '#FF6B4A';
     const occupancyColor = this.getOccupancyColor(vehicle.occupancy);
     
     return `
-      <div style="min-width: 220px; font-family: Arial, sans-serif;">
+      <div style="min-width: 250px; font-family: Arial, sans-serif;">
         <h3 style="margin: 0 0 8px 0; color: #1e293b;">
           ${vehicle.type} ${vehicle.vehicleNumber}
         </h3>
@@ -608,25 +744,31 @@ export class PublicTransportTracking implements OnInit, AfterViewInit, OnDestroy
         <div style="margin-bottom: 6px;"><strong>Next Stop:</strong> ${vehicle.nextStop}</div>
         <div style="margin-bottom: 6px;"><strong>ETA:</strong> ${vehicle.eta}</div>
         <hr style="margin: 8px 0;">
-        <small>Last update: ${new Date(vehicle.lastUpdate).toLocaleTimeString()}</small>
+        <div style="font-size: 11px; color: #64748b;">
+          <div><strong>📍 Start Point:</strong> ${vehicle.startLat?.toFixed(4)}, ${vehicle.startLng?.toFixed(4)}</div>
+          <div><strong>🏁 End Point:</strong> ${vehicle.endLat?.toFixed(4)}, ${vehicle.endLng?.toFixed(4)}</div>
+          <div><strong>🕐 Last update:</strong> ${new Date(vehicle.lastUpdate).toLocaleTimeString()}</div>
+        </div>
       </div>
     `;
   }
 
   getVehicleColor(type: string, status: string): string {
-    if (status === 'delayed') return '#f97316';
+    if (status === 'delayed') return '#FF6B4A';
     if (status === 'inactive') return '#64748b';
     switch(type) {
       case 'Bus': return '#3b82f6';
       case 'Jeepney': return '#10b981';
-      case 'Train': return '#8b5cf6';
+      case 'Taxi': return '#f59e0b';
+      case 'Motorcycle': return '#8b5cf6';
+      case 'Bicycle': return '#06b6d4';
       default: return '#6b7280';
     }
   }
 
   getOccupancyColor(occupancy: number): string {
     if (occupancy > 80) return '#ef4444';
-    if (occupancy > 50) return '#f97316';
+    if (occupancy > 50) return '#FF6B4A';
     return '#22c55e';
   }
 

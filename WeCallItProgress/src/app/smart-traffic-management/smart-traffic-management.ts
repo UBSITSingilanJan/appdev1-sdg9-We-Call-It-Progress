@@ -41,8 +41,23 @@ export class SmartTrafficManagement implements OnInit, AfterViewInit {
   selectedLat: number | null = null;
   selectedLng: number | null = null;
 
+  showSuccessModal = false;
+  successMessageText = '';
   showErrorModal = false;
   errorMessageText = '';
+  showDeleteModal = false;
+  deleteRouteId: number | null = null;
+  deleteRouteName: string = '';
+
+  private successTimeout: any = null;
+  private errorTimeout: any = null;
+
+  private baguioBounds = {
+    north: 16.45,
+    south: 16.35,
+    east: 120.65,
+    west: 120.52
+  };
 
   private locations = [
     { name: 'Session Road', lat: 16.4119, lng: 120.5956 },
@@ -92,18 +107,20 @@ export class SmartTrafficManagement implements OnInit, AfterViewInit {
 
     this.map = L.map(this.mapContainer.nativeElement, {
       center: [16.4119, 120.5956],
-      zoom: 14,
+      zoom: 15,
+      minZoom: 14,
+      maxZoom: 18,
       maxBounds: L.latLngBounds(
-        L.latLng(16.35, 120.55),
-        L.latLng(16.48, 120.65)
+        L.latLng(this.baguioBounds.south, this.baguioBounds.west),
+        L.latLng(this.baguioBounds.north, this.baguioBounds.east)
       ),
       maxBoundsViscosity: 1.0
     });
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap contributors',
-      maxZoom: 18,
-      minZoom: 12
+      maxZoom: 19,
+      minZoom: 13
     }).addTo(this.map);
 
     this.map.on('click', (e: L.LeafletMouseEvent) => {
@@ -161,15 +178,23 @@ export class SmartTrafficManagement implements OnInit, AfterViewInit {
   }
 
   placePin(latlng: L.LatLng): void {
-    this.selectedLat = latlng.lat;
-    this.selectedLng = latlng.lng;
+    let lat = latlng.lat;
+    let lng = latlng.lng;
+    
+    if (lat < this.baguioBounds.south) lat = this.baguioBounds.south;
+    if (lat > this.baguioBounds.north) lat = this.baguioBounds.north;
+    if (lng < this.baguioBounds.west) lng = this.baguioBounds.west;
+    if (lng > this.baguioBounds.east) lng = this.baguioBounds.east;
+    
+    this.selectedLat = lat;
+    this.selectedLng = lng;
     
     if (this.tempMarker) {
       this.map.removeLayer(this.tempMarker);
     }
     
     const customIcon = L.divIcon({
-      html: '<div style="background: #f97316; width: 16px; height: 16px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 0 2px #f97316;"></div>',
+      html: '<div style="background: #FF6B4A; width: 16px; height: 16px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 0 2px #FF6B4A;"></div>',
       iconSize: [22, 22],
       popupAnchor: [0, -8]
     });
@@ -204,7 +229,6 @@ export class SmartTrafficManagement implements OnInit, AfterViewInit {
         this.routes.push(newRoute);
         this.renderMarkers();
         this.loading = false;
-        this.cdr.detectChanges();
         
         this.newRoute = {
           id: 0,
@@ -214,7 +238,11 @@ export class SmartTrafficManagement implements OnInit, AfterViewInit {
         };
         
         this.cancelAddRoute();
-        this.showError('Route added successfully!');
+        
+        setTimeout(() => {
+          this.showSuccess('Route added successfully!');
+          this.cdr.detectChanges();
+        }, 100);
       },
       error: (error) => {
         console.error('Error adding route:', error);
@@ -225,34 +253,90 @@ export class SmartTrafficManagement implements OnInit, AfterViewInit {
     });
   }
 
-  deleteRoute(id: number): void {
-    this.http.delete(`${this.apiUrl}/${id}`).subscribe({
+  confirmDelete(id: number, name: string): void {
+    this.deleteRouteId = id;
+    this.deleteRouteName = name;
+    this.showDeleteModal = true;
+    this.cdr.detectChanges();
+  }
+
+  closeDeleteModal(): void {
+    this.showDeleteModal = false;
+    this.deleteRouteId = null;
+    this.deleteRouteName = '';
+    this.cdr.detectChanges();
+  }
+
+  deleteRoute(): void {
+    if (this.deleteRouteId === null) return;
+    
+    const idToDelete = this.deleteRouteId;
+    const nameToDelete = this.deleteRouteName;
+    
+    this.closeDeleteModal();
+    
+    this.http.delete(`${this.apiUrl}/${idToDelete}`).subscribe({
       next: () => {
-        this.routes = this.routes.filter(r => r.id !== id);
+        this.routes = this.routes.filter(r => r.id !== idToDelete);
         this.renderMarkers();
         this.cdr.detectChanges();
-        this.showError('Route deleted successfully!');
+        this.showSuccess(`Route "${nameToDelete}" deleted successfully!`);
       },
       error: (error) => {
         console.error('Error deleting route:', error);
-        this.showError('Failed to delete route');
+        this.showError(`Failed to delete route "${nameToDelete}"`);
       }
     });
   }
 
+  showSuccess(message: string): void {
+    if (this.successTimeout) {
+      clearTimeout(this.successTimeout);
+      this.successTimeout = null;
+    }
+    
+    this.successMessageText = message;
+    this.showSuccessModal = true;
+    this.cdr.detectChanges();
+    
+    this.successTimeout = setTimeout(() => {
+      this.closeSuccessModal();
+    }, 3000);
+  }
+
+  closeSuccessModal(): void {
+    if (this.successTimeout) {
+      clearTimeout(this.successTimeout);
+      this.successTimeout = null;
+    }
+    this.showSuccessModal = false;
+    this.successMessageText = '';
+    this.cdr.detectChanges();
+  }
+
   showError(message: string): void {
+    if (this.errorTimeout) {
+      clearTimeout(this.errorTimeout);
+      this.errorTimeout = null;
+    }
+    
     this.errorMessageText = message;
     this.showErrorModal = true;
-    if (message.includes('successfully')) {
-      setTimeout(() => {
-        this.closeErrorModal();
-      }, 3000);
-    }
+    this.cdr.detectChanges();
+    
+    this.errorTimeout = setTimeout(() => {
+      this.closeErrorModal();
+    }, 3000);
   }
 
   closeErrorModal(): void {
+    if (this.errorTimeout) {
+      clearTimeout(this.errorTimeout);
+      this.errorTimeout = null;
+    }
     this.showErrorModal = false;
     this.errorMessageText = '';
+    this.cdr.detectChanges();
   }
 
   loadRoutes(): void {
@@ -304,8 +388,16 @@ export class SmartTrafficManagement implements OnInit, AfterViewInit {
         const location = this.locations.find(loc => 
           route.name.toLowerCase().includes(loc.name.toLowerCase())
         );
-        route.lat = location ? location.lat : 16.4119 + (Math.random() * 0.03 - 0.015);
-        route.lng = location ? location.lng : 120.5956 + (Math.random() * 0.03 - 0.015);
+        let lat = location ? location.lat : 16.4119 + (Math.random() * 0.03 - 0.015);
+        let lng = location ? location.lng : 120.5956 + (Math.random() * 0.03 - 0.015);
+        
+        if (lat < this.baguioBounds.south) lat = this.baguioBounds.south;
+        if (lat > this.baguioBounds.north) lat = this.baguioBounds.north;
+        if (lng < this.baguioBounds.west) lng = this.baguioBounds.west;
+        if (lng > this.baguioBounds.east) lng = this.baguioBounds.east;
+        
+        route.lat = lat;
+        route.lng = lng;
       }
 
       const color = this.getColor(route.congestionLevel, route.status);
@@ -347,7 +439,7 @@ export class SmartTrafficManagement implements OnInit, AfterViewInit {
           <button onclick="updateCongestion(${route.id}, 20)" style="background: #22c55e; margin: 2px; padding: 4px 8px; border: none; border-radius: 4px; color: white; cursor: pointer;">
             Light (20%)
           </button>
-          <button onclick="updateCongestion(${route.id}, 50)" style="background: #f97316; margin: 2px; padding: 4px 8px; border: none; border-radius: 4px; color: white; cursor: pointer;">
+          <button onclick="updateCongestion(${route.id}, 50)" style="background: #FF6B4A; margin: 2px; padding: 4px 8px; border: none; border-radius: 4px; color: white; cursor: pointer;">
             Medium (50%)
           </button>
           <button onclick="updateCongestion(${route.id}, 80)" style="background: #ef4444; margin: 2px; padding: 4px 8px; border: none; border-radius: 4px; color: white; cursor: pointer;">
@@ -362,23 +454,23 @@ export class SmartTrafficManagement implements OnInit, AfterViewInit {
 
   getColor(level: number, status: string): string {
     if (status === 'blocked') return '#ef4444';
-    if (status === 'heavy') return '#f97316';
+    if (status === 'heavy') return '#FF6B4A';
     if (level > 70) return '#ef4444';
-    if (level > 40) return '#f97316';
+    if (level > 40) return '#FF6B4A';
     return '#22c55e';
   }
 
   getStatusColor(status: string): string {
     switch(status) {
       case 'blocked': return '#ef4444';
-      case 'heavy': return '#f97316';
+      case 'heavy': return '#FF6B4A';
       default: return '#22c55e';
     }
   }
 
   getCongestionColor(level: number): string {
     if (level > 70) return '#ef4444';
-    if (level > 40) return '#f97316';
+    if (level > 40) return '#FF6B4A';
     return '#22c55e';
   }
 

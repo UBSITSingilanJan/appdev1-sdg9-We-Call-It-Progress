@@ -37,10 +37,7 @@ function loadData() {
         db.infrastructureIssues = loaded.infrastructureIssues || [];
         db.maintenanceTeams = loaded.maintenanceTeams || [];
         console.log('✅ Data loaded from file');
-        console.log(`📊 Schedules: ${db.schedules.length}`);
-        console.log(`📊 Reports: ${db.reports.length}`);
-        console.log(`📊 Waste Routes: ${db.wasteRoutes.length}`);
-        console.log(`📊 Traffic Routes: ${db.routes.length}`);
+        console.log(`📊 Vehicles: ${db.vehicles.length}`);
       } else {
         saveData();
         console.log('📁 Created new data.json');
@@ -276,6 +273,10 @@ app.post('/api/vehicles', (req, res) => {
     occupancy: req.body.occupancy || 0,
     lat: req.body.lat || 14.5833,
     lng: req.body.lng || 121.0,
+    startLat: req.body.startLat || null,
+    startLng: req.body.startLng || null,
+    endLat: req.body.endLat || null,
+    endLng: req.body.endLng || null,
     nextStop: req.body.nextStop || 'Starting point',
     eta: req.body.eta || '0 mins',
     lastUpdate: new Date().toISOString()
@@ -366,12 +367,6 @@ app.listen(PORT, () => {
   console.log(`\n🚀 Server running at http://localhost:${PORT}`);
   console.log(`📁 Data file: ${DATA_FILE}`);
   console.log(`📊 Current data loaded:`);
-  console.log(`   - Schedules: ${db.schedules.length}`);
-  console.log(`   - Reports: ${db.reports.length}`);
-  console.log(`   - Waste Routes: ${db.wasteRoutes.length}`);
-  console.log(`   - Traffic Routes: ${db.routes.length}`);
-  console.log(`   - Energy: ${db.energyData.length}`);
-  console.log(`   - Vehicles: ${db.vehicles.length}`);
-  console.log(`   - Infrastructure Issues: ${db.infrastructureIssues.length}`);
+  console.log(`   - Vehicles: ${db.vehicles.length} (with start/end points)`);
   console.log(`\n✅ Ready to accept requests\n`);
 });

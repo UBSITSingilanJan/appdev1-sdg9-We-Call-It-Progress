@@ -314,11 +314,27 @@
   </div>
 </div>
 
+<div class="modal-overlay" *ngIf="showSuccessModal" (click)="closeSuccessModal()">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <span class="modal-icon">✅</span>
+      <h2>Success</h2>
+      <button class="modal-close" (click)="closeSuccessModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <p>{{ successMessageText }}</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-confirm" (click)="closeSuccessModal()">OK</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" *ngIf="showErrorModal" (click)="closeErrorModal()">
   <div class="modal-card" (click)="$event.stopPropagation()">
     <div class="modal-header">
-      <span class="modal-icon">{{ errorMessageText.includes('successfully') ? '✅' : '❌' }}</span>
-      <h2>{{ errorMessageText.includes('successfully') ? 'Success' : 'Error' }}</h2>
+      <span class="modal-icon">❌</span>
+      <h2>Error</h2>
       <button class="modal-close" (click)="closeErrorModal()">×</button>
     </div>
     <div class="modal-body">

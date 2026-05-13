@@ -458,6 +458,23 @@ input:focus, select:focus {
   transform: translateY(-2px);
 }
 
+.btn-cancel {
+  background: #475569;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex: 1;
+}
+
+.btn-cancel:hover {
+  background: #334155;
+  transform: translateY(-2px);
+}
+
 @media (max-width: 768px) {
   .transport-page { padding: 15px; }
   .content-wrapper { flex-direction: column; }

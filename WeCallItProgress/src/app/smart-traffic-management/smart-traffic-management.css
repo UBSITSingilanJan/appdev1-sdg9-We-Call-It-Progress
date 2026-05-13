@@ -74,7 +74,7 @@
   background: #1a2a3a;
   border-radius: 16px;
   padding: 20px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
 .card h3 {
@@ -88,7 +88,7 @@
 .start-add-btn {
   width: 100%;
   padding: 12px;
-  background: linear-gradient(135deg, #22c55e, #16a34a);
+  background: #22c55e;
   color: white;
   border: none;
   border-radius: 8px;
@@ -101,6 +101,7 @@
 .start-add-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4);
+  background: #16a34a;
 }
 
 .add-route-instruction {
@@ -169,7 +170,7 @@ input:focus, select:focus {
 .submit-add-btn {
   flex: 1;
   padding: 10px;
-  background: linear-gradient(135deg, #FF6B4A, #e85a3a);
+  background: #FF6B4A;
   color: white;
   border: none;
   border-radius: 8px;
@@ -181,6 +182,7 @@ input:focus, select:focus {
 .submit-add-btn:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(255, 107, 74, 0.4);
+  background: #e85a3a;
 }
 
 .submit-add-btn:disabled {
@@ -393,6 +395,21 @@ small {
 .btn-confirm:hover {
   background: #e85a3a;
   transform: translateY(-2px);
+}
+
+.btn-cancel {
+  background: #475569;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-cancel:hover {
+  background: #334155;
 }
 
 @media (max-width: 768px) {
